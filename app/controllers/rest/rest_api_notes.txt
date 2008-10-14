@@ -1,0 +1,85 @@
+                   ===== REST API LAYER NOTES =====
+
+The REST API is implemented under the Rest::ResourceController classes.
+If the resource is already being served by some existing controller, this class
+is derived from that class. Ideally, the REST classes only do the following tasks
+
+   * Transform the coming ids so that they can be consumed by the underlying
+     controllers.
+   * We do not yet validate the relationships of the nested parameters in the REST
+     controllers. For instance, for the following REST call:
+      GET /databases/5/entities/2/instacnes/4
+     We will not verify that the given instance belongs to the given entity and
+     the mentioned entity belongs to the given database. We leave these details
+     for the check_all_ids function of the parent classes now.
+     However, if the class has no parent class, it might inspect these things.
+   * Return the results in the given format.
+
+The JSON is generated at the REST level. Any REST level modifications are rmeoved
+from the existing controllers.
+
+
+Each REST controller has an adjust_params function which swaps the incoming parameters
+or calculates them based on the action. The methods are branched/grouped by the action
+and then the type of call made. The anatomy of the function is such that if it finds
+any missing params in a particular case, it renders a text message along with an
+HTTP status code and returns false. In case there is nothing missing and function
+succusfully swaps/adjusts the incoming params for the underlying functions, it explicilty
+returns true. If none of the checks get passed, this means it is a service not being
+provided by the controller. In that case, a detailed text message is rendered with
+the HTTP status code 400 and false is returned. This piece of code is the last
+statement of the fucntion. These style guidlines for the adjust params should be followed
+for buildilng any new REST controllers.
+
+A Note about check_all_ids:
+===========================
+The check_all_ids function is responsible for validating the provided ids of the 
+obejcts involved in a request and it is called as a before_filter. If it finds anything
+inconsitent, it returns false and hence further processing is halted. 
+This is good for the controllers but when we come to the REST handling controlles,
+This causes problems:
+
+   * Because REST controllers are derived from the existing controllers,
+     we cannot 
+
+                      Communication Between 
+                       REST Controllers 
+                              and
+                      Existing Controllers
+               ====================================
+
+There is basically two way communication between the REST Controllers and the
+controllers currently serving the requests beneath the surface.
+
+               +------------------+
+               | REST Controllers |
+               +------------------+
+                   |      ^
+  adjusted params  |      |   @msg, @code are returned about 
+  function adjust  |      |  the status of operation
+  params           v      |
+             +----------------------+
+             | Existing Controllers |
+             +----------------------+ 
+
+
+                    The Layered before_filters in REST Controllers
+                    ==============================================
+Each of the REST controller has three before filter layers. At the first layer,
+it is checked that the records corresponding to the provided ids in the request
+paramters exsits. This is done by the check_all_ids function in each REST handler
+
+At the second level, if the REST call is in the form of a nested REST call, the 
+relationship of the parameters is validated.
+
+At third level, the parameters are adjusted so that the existing controllers can
+deal with them. This layer might be eliminated later on.
+
+validate_rest_call
+==================
+   check_all_ids
+   ==============
+      check_relationships
+      ==============
+         adjust_params
+         ==============
