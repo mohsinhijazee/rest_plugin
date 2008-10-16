@@ -1,13 +1,22 @@
 DedomenonRestApi
 ================
 
-Introduction goes here.
+This plugiln addds REST API to dedomenon.
+
+Installation
+============
+1- Copy this plugin under RAILS_ROOT/vender/plugins
+2- In your RAILS_ROOT/config/routes.rb, add following line:
+   map.from_plugin 'rest-plugin' if File.exists? "#{RAILS_ROOT}/vendor/plugins/rest-plugin"
 
 
 Example
 =======
 
-Example goes here.
+Examples will be here.
 
 
-Copyright (c) 2008 [name of plugin creator], released under the MIT license
+
+
+
+Copyright (c) 2008 Raphael Buadin, released under the MIT license
