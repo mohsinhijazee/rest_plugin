@@ -21,19 +21,16 @@
 #   This controller exposes the account typees as REST resource
 #
 #
-class Rest::AccountTypesController < ApplicationController
-  include Rest::RestValidations
-  include InstanceProcessor
-  include Rest::UrlGenerator
- 
-  before_filter :login_required
+class Rest::AccountTypesController < Rest::RestController
+  
   before_filter :validate_rest_call
   before_filter :check_ids
   
-  
+  # Index will always render a resource parcel in @parcel
   def index
     begin
-      results = get_paginated_records_for(
+      raise "Strange error!"
+      @parcel = get_paginated_records_for(
         :for            => AccountType,
         :start_index    => params[:start_index],
         :max_results    => params[:max_results],
@@ -41,22 +38,44 @@ class Rest::AccountTypesController < ApplicationController
         :direction      => params[:direction],
         :conditions     => params[:conditions]
         )
+      respond_to do |wants| 
+        wants.html {render :to_xml  => 'GETALL.xml.builder', :layout => false}
+        wants.json {render :to_json => 'GETALL.xml.builder'}
+        wants.xml  {render :to_xml  => 'GETALL.xml.builder', :layout => false}
+        wants.yaml {render :to_yaml => 'GETALL.xml.builder'}
+      end    
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-      render :text => @msg, :status => @code and return
+      # we need to work out this
+      #@msg, @code = report_errors(nil, e)
+      @msg = e
+      @code = 500
+      respond_to do| wants|
+        wants.html {render :to_xml  => 'error.xml.builder', :layout => false, :status => @code }
+        wants.json {render :to_json => 'error.xml.builder', :status => @code }
+        wants.xml  {render :to_xml  => 'error.xml.builder', :layout => false, :status => @code }
+        wants.yaml {render :to_yaml => 'error.xml.builder', :status => @code }
+      end
     end
     
-    respond_to do |format|
-      format.json { render :json => results.to_json(:format => 'json') and return}
-    end
+    
     
   end
   
+  # show will always leave resource in @ resource
   def show
-    @account_type = AccountType.find(params[:id])
+    begin
+      @resource = AccountType.find(params[:id])
     
-    respond_to do |format|
-      format.json { render :json => @account_type.to_json(:format => 'json') and return }
+      respond_to do |wants|
+        wants.html {render :to_xml  => 'GET.xml.builder', :layout => false}
+        wants.xml  {render :to_xml  => 'GET.xml.builder', :layout => false}
+        wants.json {render :to_json => 'GET.xml.builder'}
+        wants.yaml {render :to_yaml => 'GET.xml.builder'}
+      end
+      
+    rescue Exception => e
+      @msg, @code = report_errors(nil, e)
+      render :text => @msg, :status => @code and return
     end
     
   end
@@ -69,15 +88,17 @@ class Rest::AccountTypesController < ApplicationController
       @account_type.save!
       @msg = 'OK'
       @code = 201
+      
+      respond_to do |format|
+        @msg = [(@@lookup[:AccountType] % [@@base_url, @account_type.id]) + '.json'] if @code == 201
+        format.json { render :json => @msg  , :status => @code }
+    end
     rescue Exception => e
       @msg, @code = report_errors(@account_type, e)
     end
     
     
-    respond_to do |format|
-      @msg = [(@@lookup[:AccountType] % [@@base_url, @account_type.id]) + '.json'] if @code == 201
-      format.json { render :json => @msg  , :status => @code }
-    end
+    
     
   end
   
