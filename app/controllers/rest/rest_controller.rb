@@ -28,7 +28,8 @@ class Rest::RestController < ApplicationController
   include Rest::UrlGenerator
   
   # We neet to replace with REST authentication. For now, its cookie based.
-  before_filter :login_required
+  # No authentication required for now
+  #before_filter :login_required
 
   # *Description*
   #   Custome render method that allows us to render content into JSON and YAML 
@@ -42,6 +43,10 @@ class Rest::RestController < ApplicationController
     cbparam = params[:callback] || params[:jsonp]
     content = "#{cbparam}(#{content})" unless cbparam.blank?
     render :json => content, :layout => false
+  elsif opts[:to_xml]
+    content = render_to_string(:template => opts[:to_xml], :layout => false)
+    headers["Content-Type"] = "application/xml;"
+    render :text => content, :layout => false
   else
     super opts, &block
   end
