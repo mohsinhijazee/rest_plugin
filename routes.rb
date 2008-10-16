@@ -17,9 +17,6 @@
 #Copyright 2008 Raphaël Bauduin
 ################################################################################
 
-ActionController::Routing::Routes.draw do |map|
-
-
   # REST shoudl be disable while running the tests.
   # REST shold also be disabled if you are accessing the application from the 
   # old interface.
@@ -63,51 +60,51 @@ enable_rest = true
 #
   if enable_rest == true then
     
-    map.resources :data_types, :singular => 'data_type', :controller => 'rest/data_types'
+    resources :data_types, :singular => 'data_type', :controller => 'rest/data_types'
     
-    map.resources :databases, :singular => 'database', :controller => 'rest/databases' do |database|
+    resources :databases, :singular => 'database', :controller => 'rest/databases' do |database|
       database.resources :entities, :singular => 'entity', :controller => 'rest/entities'
       database.resources :details , :singular => 'detail', :controller => 'rest/details'
     end
     
-    map.resources :entities, :singular => 'entity', :controller => 'rest/entities' do |entity|
+    resources :entities, :singular => 'entity', :controller => 'rest/entities' do |entity|
       entity.resources :details, :singular => 'detail', :controller => 'rest/details'
       entity.resources :instances, :singular => 'instance', :controller => 'rest/instances'
       entity.resources :relations, :singular => 'relation', :controller => 'rest/relations'
     end
     
-    map.resources :details, :singular => 'detail', :controller => 'rest/details' do |detail|
+    resources :details, :singular => 'detail', :controller => 'rest/details' do |detail|
       detail.resources :propositions, :singular => 'proposition', :controller => 'rest/detail_value_propositions'
       # Useless
       #detail.resources :values, :singular => 'value', :controller => 'rest/values'
     end
     
-    map.resources :instances, :singular => 'instance', :controller => 'rest/instances' do |instance|
+    resources :instances, :singular => 'instance', :controller => 'rest/instances' do |instance|
       instance.resources :links, :singular => 'link', :controller => 'rest/links'
       instance.resources :details, :singular => 'detail', :controller => 'rest/details' do |detail|
         detail.resources :values, :singular => 'value', :controller => 'rest/values'
       end
     end
     
-    map.resources :links, :singular => 'link', :controller => 'rest/links'
+    resources :links, :singular => 'link', :controller => 'rest/links'
     
-    map.resources :relations, :singular => 'relation', :controller => 'rest/relations'
-    map.resources :relation_side_types, :singular => 'relation_side_type', :controller => 'rest/relation_side_types'
+    resources :relations, :singular => 'relation', :controller => 'rest/relations'
+    resources :relation_side_types, :singular => 'relation_side_type', :controller => 'rest/relation_side_types'
     
-    map.resources :users, :singular => 'user', :controller => 'rest/users'
-    map.resources :user_types, :singular => 'user_type', :controller => 'rest/user_types'
+    resources :users, :singular => 'user', :controller => 'rest/users'
+    resources :user_types, :singular => 'user_type', :controller => 'rest/user_types'
     
-    map.resources :accounts, :singular => 'account', :controller => 'rest/accounts' do |account|
+    resources :accounts, :singular => 'account', :controller => 'rest/accounts' do |account|
       account.resources :users, :singular => 'user', :controller => 'rest/users'
       account.resources :databases, :singular => 'database', :controller => 'rest/databases'
     end
     
-    map.resources :account_types, :singular => 'account_type', :controller => 'rest/account_types'
+    resources :account_types, :singular => 'account_type', :controller => 'rest/account_types'
     
     
-    map.resources :propositions, :singular => 'proposition', :controller => 'rest/detail_value_propositions'
-    map.resources :detail_statuses, :singular => 'detail_status', :controller => 'rest/detail_statuses'
+    resources :propositions, :singular => 'proposition', :controller => 'rest/detail_value_propositions'
+    resources :detail_statuses, :singular => 'detail_status', :controller => 'rest/detail_statuses'
     
     
   end
-end
+
