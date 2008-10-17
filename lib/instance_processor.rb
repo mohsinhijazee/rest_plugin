@@ -31,6 +31,9 @@
 # FIXME: Should use less error checking, instead rely on exceptions.
 # FIXME: SaveValues function is not checking on the limit of allowed maximum number
 # of values!
+# FIXME: Check for all the places if they're raising proper exceptions
+require 'exceptions.rb'
+
 module InstanceProcessor
 include Rest::UrlGenerator  
 
