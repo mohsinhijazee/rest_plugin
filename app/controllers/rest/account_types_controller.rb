@@ -29,7 +29,7 @@ class Rest::AccountTypesController < Rest::RestController
   # Index will always render a resource parcel in @parcel
   def index
     begin
-      raise "Strange error!"
+      raise "undefined method new for object mohsin"
       @parcel = get_paginated_records_for(
         :for            => AccountType,
         :start_index    => params[:start_index],
@@ -45,15 +45,12 @@ class Rest::AccountTypesController < Rest::RestController
         wants.yaml {render :to_yaml => 'GETALL.xml.builder'}
       end    
     rescue Exception => e
-      # we need to work out this
-      #@msg, @code = report_errors(nil, e)
-      @msg = e
-      @code = 500
+      @error = process_exception(e)
       respond_to do| wants|
-        wants.html {render :to_xml  => 'error.xml.builder', :layout => false, :status => @code }
-        wants.json {render :to_json => 'error.xml.builder', :status => @code }
-        wants.xml  {render :to_xml  => 'error.xml.builder', :layout => false, :status => @code }
-        wants.yaml {render :to_yaml => 'error.xml.builder', :status => @code }
+        wants.html {render :to_xml  => 'error.xml.builder', :layout => false, :status => @error.code }
+        wants.json {render :to_json => 'error.xml.builder', :status => @error.code }
+        wants.xml  {render :to_xml  => 'error.xml.builder', :layout => false, :status => @error.code }
+        wants.yaml {render :to_yaml => 'error.xml.builder', :status => @error.code }
       end
     end
     
