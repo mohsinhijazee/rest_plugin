@@ -29,7 +29,6 @@ class Rest::AccountTypesController < Rest::RestController
   # Index will always render a resource parcel in @parcel
   def index
     begin
-      raise "undefined method new for object mohsin"
       @parcel = get_paginated_records_for(
         :for            => AccountType,
         :start_index    => params[:start_index],
@@ -38,20 +37,10 @@ class Rest::AccountTypesController < Rest::RestController
         :direction      => params[:direction],
         :conditions     => params[:conditions]
         )
-      respond_to do |wants| 
-        wants.html {render :to_xml  => 'GETALL.xml.builder', :layout => false}
-        wants.json {render :to_json => 'GETALL.xml.builder'}
-        wants.xml  {render :to_xml  => 'GETALL.xml.builder', :layout => false}
-        wants.yaml {render :to_yaml => 'GETALL.xml.builder'}
-      end    
+        render :response => :GETALL
     rescue Exception => e
       @error = process_exception(e)
-      respond_to do| wants|
-        wants.html {render :to_xml  => 'error.xml.builder', :layout => false, :status => @error.code }
-        wants.json {render :to_json => 'error.xml.builder', :status => @error.code }
-        wants.xml  {render :to_xml  => 'error.xml.builder', :layout => false, :status => @error.code }
-        wants.yaml {render :to_yaml => 'error.xml.builder', :status => @error.code }
-      end
+      render :response => :error
     end
     
     
@@ -62,71 +51,47 @@ class Rest::AccountTypesController < Rest::RestController
   def show
     begin
       @resource = AccountType.find(params[:id])
-    
-      respond_to do |wants|
-        wants.html {render :to_xml  => 'GET.xml.builder', :layout => false}
-        wants.xml  {render :to_xml  => 'GET.xml.builder', :layout => false}
-        wants.json {render :to_json => 'GET.xml.builder'}
-        wants.yaml {render :to_yaml => 'GET.xml.builder'}
-      end
-      
+      render :response => :GET
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-      render :text => @msg, :status => @code and return
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
   
+  # Create will always create the new resource in @resource
   def create
-    @account_type = AccountType.new(params[:account_type])
-    
-    
     begin
-      @account_type.save!
-      @msg = 'OK'
-      @code = 201
-      
-      respond_to do |format|
-        @msg = [(@@lookup[:AccountType] % [@@base_url, @account_type.id]) + '.json'] if @code == 201
-        format.json { render :json => @msg  , :status => @code }
-    end
+      @resource = AccountType.new(params[:account_type])    
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-      @msg, @code = report_errors(@account_type, e)
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    
-    
     
   end
   
+    # will always keep the updated resource in @resource.
+    # also, will always call update_attributes!
   def update
-    @account_type = AccountType.find(params[:id])
-    
     begin
-      @account_type.update_attributes!(params[:account_type])
-      @msg = @account_type.to_json(:format => 'json')
-      @code = 200
+      @resource = AccountType.find(params[:id])
+      @resource.update_attributes!(params[:account_type][:resource])
+      render :response => :PUT
     rescue Exception => e
-      @msg, @code = report_errors(@account_type, e)
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code }
-    end
-    
   end
   
   def destroy
     begin
       AccountType.destroy(params[:id])
-      @msg = 'OK'
-      @code = 200
+      render :response => :DELETE
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-    end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code }
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
@@ -172,8 +137,7 @@ class Rest::AccountTypesController < Rest::RestController
   def access_denied
     render :json => %Q~{"errors": ["Please login to consume the REST API"]}~, :status => 401
   end
-
-  
-
-  
 end
+  
+
+  
