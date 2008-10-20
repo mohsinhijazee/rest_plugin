@@ -8,4 +8,8 @@ xml.error do
       xml.reason reason
     end
   end
+  # if development or test environment, dump backtrace also
+  if %(development test).include? RAILS_ENV
+    xml.backtrace @error.backtrace.to_s
+  end
 end

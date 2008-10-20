@@ -17,6 +17,29 @@
 #Copyright 2008 Raphaël Bauduin
 ################################################################################
 
+# *Description*
+#   This templae renders a sinlge resource and it is always rendered as partial.
+#   It is called by following views:
+#     * GET.xml.builder
+#     * GETALL.xml.builder
+#     * PUT.xml.builder
+#     
+#   == Conventions
+#     * The resource being rendered is always available as a local variable to
+#       this template of same name as of this template. For example, if the 
+#       template name is _relation_type.xml.builder then the resource to be
+#       rendered will be available as relation_type.
+#       
+#     * At the very outset, URL of the resource is rendered
+#     
+#     * Next, all the attributes of the resource are rendered.
+#     
+#     * Lastly, any addtional URLs are added to it.
+#     
+#     * Any attributes that should not be rendered are listed in the array naemed
+#       'to_be_skipped'
+#     
+
 # Add any attributes that should not be part of the representation here
 to_be_skipped = [
                   'id'
