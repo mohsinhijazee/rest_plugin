@@ -27,7 +27,9 @@
 #     * The resources from the rendering controller is always recieved
 #       in an instance variable @resource.
 #     * The @resource is passed in :object key which appears to the rendering
-#       template as a local variable of same name as the name of template is.
+#       template as a local variable of same name as the name of template is
+#       (This is Rails convention that :object would appear as local variable
+#       as name of template).
 #       
 #   == Example:
 #     Suppose an Entity resource of id 5 is required. 
@@ -48,6 +50,6 @@
 xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 resource_type = @resource.class.name.underscore
 resource_template = resource_type + '.xml.builder'
-  resources = render(:partial => resource_template, 
+resource = render(:partial => resource_template, 
                       :object => @resource)
-xml << resources
+xml << resource
