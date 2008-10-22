@@ -25,7 +25,7 @@
 #TODO: Errors should be based on exceptions which should be properly reported back
 #TODO: REST authentication
 
-class Rest::RestController < ApplicationController
+class Rest::RestController < ActionController::Base
   include Rest::RestValidations
   include InstanceProcessor
   include Rest::UrlGenerator
@@ -43,13 +43,13 @@ class Rest::RestController < ApplicationController
   #  pure REST philosophy so will not be supplying cookies with our reqeusts sometimes.
   #  So for those times, it should fall back to some user.
   def log_me_in
-    session[:user] = User.find(:first, :conditions => ["login='mohsinhijazee@zeropoint.it'"])
+    session['user'] = User.find(:first, :conditions => ["login='mohsinhijazee@zeropoint.it'"])
   end
   
   # *Description*
   #  Clears the session
   def log_me_out
-    session[:user] = nil
+    session['user'] = nil
   end
   
   # *Description*
