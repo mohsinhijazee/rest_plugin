@@ -58,6 +58,24 @@ enable_rest = true
 #  
 #  
 #
+
+  # For each resoruce exposed, you get following methods:
+  # _url full URL has a formatted version also
+  # _path only path has a formatted version also
+  # 
+  # hash_for would return which controller, method etc.
+  # For exmaple, if you exposed resource databases wtih following:
+  # map.resources :databases
+  # Then you have following:
+  # databases_url
+  # databases_path
+  # hash_for_databases_url
+  # hash_for_databases_path
+  # formatted_databases_url
+  # formatted_databases_path
+   
+  
+  
   if enable_rest == true then
     
     resources :data_types, :singular => 'data_type', :controller => 'rest/data_types'
