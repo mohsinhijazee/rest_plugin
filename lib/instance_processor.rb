@@ -427,8 +427,10 @@ include Rest::UrlGenerator
       instances[:order_by] = options[:order_by]
       instances[:direction] = options[:direction].downcase if options[:direction]
       instances[:resources] = records
+      instances[:resource_type] = 'instance'
       return instances 
     else
+      #records[:resource_type] = 'instance'
       return records
     end
   end
@@ -606,28 +608,6 @@ include Rest::UrlGenerator
     
     return record_set
     
-#    json = '{'
-#    # For each of the fields of the record
-#    columns.each do |field, attribute|
-#      # Start the column
-#      json += %Q~"#{field.to_s}": ~
-#      
-#      json +='['
-#      attribute[:values].each do |value|
-#        json += %Q`{"id": #{value[:id].to_s}, "value": `
-#        json += %Q`#{value[:value]}}` if attribute[:data_type] == 'madb_integer'
-#        json += %Q`"#{value[:value]}"}, ` if attribute[:data_type] != 'madb_integer'
-#      end
-#      json.chop!
-#      json.chop!
-#      json += '], '
-#    end
-#    json.chop!
-#    json.chop!
-#    json += '}'
-#    
-#    puts json
-    
   end
   
     # *Description*
@@ -677,7 +657,9 @@ include Rest::UrlGenerator
     
       record = record_set[id]
       next if !record
-      instance = {}
+      #instance = {}
+      instance = Instance.new
+      
       
       # Add the details url
       # If a single instance was asked by the get_records_for then instances url otherwise entity
@@ -685,16 +667,20 @@ include Rest::UrlGenerator
       #retrieved for an entity or a single instance
       #details_url = (@@lookup[:Instance] % [@@base_url, options[:instance]]) if options[:instance]
       #details_url = (@@lookup[:Entity] % [@@base_url, options[:entity]]) if options[:entity]
-      details_url = (@@lookup[:Entity] % [@@base_url, entity_id])
-      details_url += (@@lookup[:Detail] % ['', '']).chop + format
-      entity_url = (@@lookup[:Entity] % [@@base_url,entity_id]) + format
-      links_url = (@@lookup[:Instance] % [@@base_url, id])
-      links_url += (@@lookup[:Link] % ['', '']).chop + format
       
-      instance[:url] = @@lookup[:Instance] % [@@base_url, id.to_s] + format
-      instance[:entity_url] = entity_url
-      instance[:details_url] = details_url
-      instance[:links_url] = links_url      
+      #details_url = (@@lookup[:Entity] % [@@base_url, entity_id])
+      #details_url += (@@lookup[:Detail] % ['', '']).chop + format
+      #entity_url = (@@lookup[:Entity] % [@@base_url,entity_id]) + format
+      #links_url = (@@lookup[:Instance] % [@@base_url, id])
+      #links_url += (@@lookup[:Link] % ['', '']).chop + format
+      
+      #instance[:url] = @@lookup[:Instance] % [@@base_url, id.to_s] + format
+      #instance[:entity_url] = entity_url
+      #instance[:details_url] = details_url
+      #instance[:links_url] = links_url      
+      
+      instance[:id] = id
+      instance[:entity_id] = entity_id
       instance[:lock_version] = record_set[id][:lock_version].to_i
 
       # For each of the columns
@@ -750,7 +736,10 @@ include Rest::UrlGenerator
     values[:values].each do |value|
       
       json_value = {}
-      json_value[:url] = "#{@@base_url}/details/#{values[:detail_id]}/values/#{value[:id]}#{format}"
+      #json_value[:url] = "#{@@base_url}/details/#{values[:detail_id]}/values/#{value[:id]}#{format}"
+      json_value[:id] = value[:id]
+      json_value[:detail_id] = values[:detail_id]
+      json_value[:data_type] = values[:data_type]
       json_value[:lock_version] = value[:lock_version].to_i
      
       case values[:data_type]
