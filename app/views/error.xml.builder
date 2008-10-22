@@ -10,6 +10,11 @@ xml.error do
   end
   # if development or test environment, dump backtrace also
   if %(development test).include? RAILS_ENV
-    xml.backtrace @error.backtrace.to_s
+    traces = @error.backtrace.split('\n')
+    xml.backtrace do
+      traces.each do |trace| 
+        xml.t trace
+      end
+    end
   end
 end
