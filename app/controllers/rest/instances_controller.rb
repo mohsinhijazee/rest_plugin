@@ -151,13 +151,8 @@
 
 
 require 'json'
-class Rest::InstancesController < ApplicationController
+class Rest::InstancesController < Rest::RestController
   
-  include Rest::RestValidations
-  include InstanceProcessor  
-  
-  
-  before_filter :login_required
   
   before_filter :validate_rest_call
   
@@ -177,7 +172,7 @@ class Rest::InstancesController < ApplicationController
   def index
     # Get the records for the entity.
     begin
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for => Instance,
       :entity => params[:entity_id],
       :start_index => params[:start_index],
@@ -186,12 +181,10 @@ class Rest::InstancesController < ApplicationController
       :direction => params[:direction],
       :conditions => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => records.to_json(:format => 'json'), :status => 200 and return}
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
@@ -204,14 +197,12 @@ class Rest::InstancesController < ApplicationController
   #
   def show
      begin
-       @instance = Instance.find(params[:id])
+       @resource = get_records_for :instance => params[:id]
+       render :response => :GET
      rescue Exception => e
-       render :json => report_errors(nil, e)[0], :status => 400 and return
+       @error = process_exception(e)
+       render :response => :error
      end
-     
-     respond_to do |format|
-      format.json { render :json => @instance.to_json(:format => 'json') and return }
-    end
   end
   
   
