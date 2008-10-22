@@ -44,8 +44,10 @@
 to_be_skipped = [
                   'id'
                 ]
-
-xml.resource(:type => 'account_type') do
+#FIXME: udner a resource tag? or account_type tag?
+#resource tag adds an additional key of type to JSON
+#xml.resource(:type => 'account_type') do
+xml.account_type do
   # The URL of the resource
   xml.url url(account_type_url(account_type))
   
