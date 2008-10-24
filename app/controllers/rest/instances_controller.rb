@@ -232,7 +232,13 @@ class Rest::InstancesController < Rest::RestController
     @resource = nil
     begin
       Instance.transaction do
+        #FIXME: update_instance though returns in instance object but this does 
+        # not have any detail values attached to it as the get_records_for method
+        # appends detail values to an instance object. So unfortunately its of no
+        # use. For this reason, we need to make another call to get_reocrds_for
+        # to get the updated instance and return to the caller
         @resource = update_instance(params[:id], params[:instance])
+        @resource = get_records_for :instance => params[:id]
       end
       render :response => :PUT
     rescue Exception => e
