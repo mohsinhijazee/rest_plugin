@@ -291,14 +291,14 @@ include Rest::UrlGenerator
     begin
       detail_value = class_from_name(detail.data_type.class_name).find(value_id)
     rescue Exception => e
-      raise "Detail '#{detail.name}' does not have a value with ID #{value_id}"
+      raise BadResource.new, "Detail '#{detail.name}' does not have a value with ID #{value_id}"
     end
     
     
     # If the provided value is nil, we need to delete it after checking the vesion
     if !new_value['value']
       if detail_value.lock_version.to_i != new_value['lock_version'].to_i
-        raise BadResource.new, "Attemped to delete stale detail value"
+        raise ObsoleteResource.new, "Attemped to delete stale detail value"
       else
         detail_value.destroy and return nil
       end
@@ -658,6 +658,8 @@ include Rest::UrlGenerator
       record = record_set[id]
       next if !record
       #instance = {}
+      #FIXME: The way we're populating an instance variable, detail model
+      # needs to have some contraints about how they can be named
       instance = Instance.new
       
       
