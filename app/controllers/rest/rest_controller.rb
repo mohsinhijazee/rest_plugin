@@ -34,8 +34,8 @@ class Rest::RestController < ActionController::Base
   # No authentication required for now
   #before_filter :login_required
   
-  before_filter :log_me_in
-  after_filter :log_me_out
+  #before_filter :log_me_in
+  #after_filter :log_me_out
 
   # *Description*
   #  Logs mohsinhijazee@zeropoint.it to the session
@@ -81,18 +81,20 @@ class Rest::RestController < ActionController::Base
   #  
   def render(opts = {}, &block)
    
+    opts[:status] = 200 if !opts[:status]
     if opts[:to_yaml] then
       headers["Content-Type"] = "text/plain;"
-      render :text => Hash.from_xml(render_to_string(:template => opts[:to_yaml], :layout => false)).to_yaml, :layout => false
+      yaml = Hash.from_xml(render_to_string(:template => opts[:to_yaml], :layout => false)).to_yaml
+      render :text => yaml, :layout => false, :status => opts[:status]
     elsif opts[:to_json] then
       content = Hash.from_xml(render_to_string(:template => opts[:to_json], :layout => false)).to_json
       cbparam = params[:callback] || params[:jsonp]
       content = "#{cbparam}(#{content})" unless cbparam.blank?
-      render :json => content, :layout => false
+      render :json => content, :layout => false, :status => opts[:status]
     elsif opts[:to_xml]
       content = render_to_string(:template => opts[:to_xml], :layout => false)
       headers["Content-Type"] = "application/xml;"
-      render :text => content, :layout => false
+      render :text => content, :layout => false, :status => opts[:status]
     elsif opts[:response]
       render_rest_response opts[:response]
     else
