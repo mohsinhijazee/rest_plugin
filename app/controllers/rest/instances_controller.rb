@@ -207,59 +207,38 @@ class Rest::InstancesController < Rest::RestController
   
   
   def create
-    instances = []
-    urls = []
+    @resource = []
+    
     
     begin
       Instance.transaction do
-        instances = save_instances(params[:entity_id], params[:instance])
+        @resource = save_instances(params[:entity_id], params[:instance])
       end
-      instances.each do |instance|
-        urls << (@@lookup[:Instance] % [@@base_url, instance.id]) + '.json'
-      end
-      @msg = urls.to_json
-      @code = 201
+      render :response => :POST
+      #instances.each do |instance|
+#        urls << (@@lookup[:Instance] % [@@base_url, instance.id]) + '.json'
+#      end
+ #     @msg = urls.to_json
+#      @code = 201
     rescue Exception => e
-      puts e.backtrace
-      @msg, @code = report_errors(nil, e)
+      @error = process_exception e
+      render :response => :error
     end
     
-    
-    
-    
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return}
-    end
     
   end
   
   def update
-    instance = nil
+    @resource = nil
     begin
       Instance.transaction do
-        instance = update_instance(params[:id], params[:instance])
+        @resource = update_instance(params[:id], params[:instance])
       end
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      puts e.backtrace
-      @msg = report_errors(nil, e)[0]
-      @code = 409
-    rescue MadbException => e
-      puts e.backtrace
-      @msg = report_errors(nil, e)[0]
-      @code = e.code
+      render :response => :PUT
     rescue Exception => e
-      puts e.backtrace
-      @msg, @code =  report_errors(nil, e)
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    @msg = instance.to_json(:format => 'json') if @code == 200
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code}
-    end
-    
   end
   
   
@@ -274,21 +253,11 @@ class Rest::InstancesController < Rest::RestController
     
     begin
       destroy_item(Instance, params[:id], params[:lock_version])
-      @msg = 'OK'
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+      render :response => :DELETE
     rescue Exception => e
-      puts e.backtrace
-      @msg = report_errors(nil, e)[0]
-      @code = 500
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return}
-    end
-    
   end
   
   protected
