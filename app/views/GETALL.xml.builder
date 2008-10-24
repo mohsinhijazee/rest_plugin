@@ -44,10 +44,10 @@ xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 
 xml.resource_parcel do
   # Record the meta information about the parcel
-  xml.total_resources @parcel[:total_resources]  
-  xml.resources_returned  @parcel[:resources_returned] 
-  xml.start_index @parcel[:start_index]
-  xml.order_by @parcel[:start_index]
+  xml.total_resources @parcel[:total_resources].to_i
+  xml.resources_returned  @parcel[:resources_returned].to_i
+  xml.start_index @parcel[:start_index].to_i
+  xml.order_by @parcel[:order_by].to_i
   xml.direction @parcel[:direction]
   xml.conditions @parcel[:conditions]
   
