@@ -45,5 +45,15 @@ xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 # Next we call url method of the Rest::RestController helper module which appends
 # extention of the format being requested.
 #
-url_for = "#{@resource.class.name.underscore}_url".to_sym
-xml.url url(self.send url_for, @resource)
+
+if @resource.is_a? ActiveRecord::Base
+  url_for = "#{@resource.class.name.underscore}_url".to_sym
+  xml.url url(self.send url_for, @resource)
+else
+  xml.url(:type => 'array') do
+    @resource.each do |instance|
+      url_for = "#{instance.class.name.underscore}_url".to_sym
+      xml.url url(self.send url_for, instance)
+    end
+  end
+end
