@@ -40,11 +40,7 @@
 #   database[name]
 #
 
-class Rest::DatabasesController < Admin::DatabasesController
-  
-  include Rest::RestValidations
-  include Rest::UrlGenerator
-  include InstanceProcessor
+class Rest::DatabasesController < Rest::RestController
   
   # Not needed, provided by the parent controller
   #before_filter :login_required
@@ -55,7 +51,7 @@ class Rest::DatabasesController < Admin::DatabasesController
   
   before_filter :check_relationships
   # This is required to adjust the parameters.
-  before_filter :adjust_params
+  #before_filter :adjust_params
   
   
   # *Description*
@@ -66,23 +62,28 @@ class Rest::DatabasesController < Admin::DatabasesController
   #
   def index
     begin
+      
+      # FIXME: We need to perhaps change this
+      params[:account_id] = params[:account_id] || session['user'].account_id
+      
       params[:conditions] = add_condition(params[:conditions], 
                             "(account_id=#{params[:account_id]})", :and)
                           
-      results = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
         :for => Database,
         :star_index => params[:start_index], 
         :max_results => params[:max_results],
         :order_by => params[:order_by], 
         :direction => params[:direction], 
         :conditions => params[:conditions])
+      
+      render :response => :GETALL
+      
     rescue Exception => e
-      render :json => report_errors(nil, e)[0], :status => 500
+      @error = process_exception(e)
+      render :response => :error
     end
    
-    respond_to do |format|
-      format.json { render :json => results.to_json(:format => 'json')}
-    end
   end
   
   # *Description*
@@ -91,15 +92,11 @@ class Rest::DatabasesController < Admin::DatabasesController
   #
   def show
     begin
-      super
+      @resource = Database.find params[:id]
+      render :response => :GET
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-      render :json => @msg, :status => @code and return
-    end
-    
-     
-    respond_to do |format|
-      format.json { render :json => @database.to_json(:format => 'json') and return }
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
@@ -109,14 +106,12 @@ class Rest::DatabasesController < Admin::DatabasesController
   #   POST /databases
   def create
     begin
-      super
+      @resource = Database.new(params[:database])
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-      @msg, @code = report_errors(@database, e)
-    end
-    
-    respond_to do |format|
-      @msg = [(@@lookup[:Database] % [@@base_url, @database.id]) + '.json'] if @code == 201
-      format.json { render :text => @msg , :status => @code and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end  
   
@@ -125,19 +120,12 @@ class Rest::DatabasesController < Admin::DatabasesController
   #   PUT /databases/:id
   def update
     begin
-      super
-      @msg = 'OK'
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+      @resource = Database.find(params[:id])
+      @resource.update_attributes!(params[:database])
+      render :response => :PUT
     rescue Exception => e
-      @msg, @code = report_errors(@database, e)
-    end
-    
-    respond_to do |format|
-      @msg = @database.to_json(:format => 'json') if @code == 200
-      format.json { render :text => @msg, :status => @code and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -147,20 +135,11 @@ class Rest::DatabasesController < Admin::DatabasesController
   def destroy
     begin
       destroy_item(Database, params[:id], params[:lock_version])
-      @msg =  'OK'
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg =  report_errors(nil, e)[0]
-      @code = 409
+      render :response => :DELETE
     rescue Exception => e
-      @msg =  report_errors(nil, e)[0]
-      @code = 500
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
-    end
-    
   end
   
   protected
