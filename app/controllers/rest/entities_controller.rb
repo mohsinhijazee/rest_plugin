@@ -45,11 +45,7 @@
 #   The entity resource has following form:
 #  entity[name]
 #  entity[:database_id] (optional)
-class Rest::EntitiesController < Admin::EntitiesController
-  
-  include Rest::RestValidations
-  include Rest::UrlGenerator
-  include InstanceProcessor
+class Rest::EntitiesController < Rest::RestController
   
   # Not needed. Provided by the parent controller
   #before_filter :login_required
@@ -76,20 +72,18 @@ class Rest::EntitiesController < Admin::EntitiesController
       params[:conditions] = add_condition(params[:conditions], 
                             "database_id=#{params[:database_id]}", :and)
                           
-      results = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
         :for => Entity,
         :star_index => params[:start_index], 
         :max_results => params[:max_results],
         :order_by => params[:order_by], 
         :direction => params[:direction], 
         :conditions => params[:conditions])
+      
+      render :response => :GETALL
     rescue Exception => e
-      render :json => report_errors(nil, e)[0], :status => 500
-    end
-
-     
-    respond_to do |format|
-      format.json { render :json => results.to_json(:format => 'json') and return}
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -99,14 +93,11 @@ class Rest::EntitiesController < Admin::EntitiesController
   #
   def show
     begin
-      super
+      @resource = Entity.find params[:id]
+      render :response => :GET
     rescue Exception => e
-      @msg, @code = report_errors(@entity, e)
-      render :json => @msg, :status => @code and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => @entity.to_json(:format => 'json') and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -116,19 +107,13 @@ class Rest::EntitiesController < Admin::EntitiesController
   #   POST /databases/entities
   def create
     begin
-      super
-      if @code == 400
-        @msg, @code = report_errors(@entity, nil) 
-      end
+      @resource = Entity.new(params[:entity])
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-        @msg, @code = report_errors(@entity, nil) 
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      @msg = [(@@lookup[:Entity] % [@@base_url,  @entity.id]) + '.json'] if @code == 201
-      format.json { render :json => @msg , :status => @code and return}
-    end
-    
   end  
   
   # *Description*
@@ -137,17 +122,12 @@ class Rest::EntitiesController < Admin::EntitiesController
   #   PUT /databases/:entities/:id
   def update
     begin
-      super
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+      @resource = Entity.find params[:id]
+      @resource.update_attributes! params[:entity]
+      render :response => :PUT
     rescue Exception => e
-      @msg, @code = report_errors(@entity, e)
-    end
-    
-    respond_to do |format|
-      @msg = @entity.to_json(:format => 'json') if @code == 200
-      format.json { render :text => @msg, :status => @code and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -159,20 +139,11 @@ class Rest::EntitiesController < Admin::EntitiesController
   def destroy
     begin
       destroy_item(Entity, params[:id], params[:lock_version])
-      @msg = 'OK'
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+      render :response => :DELETE
     rescue Exception => e
-      @msg  = report_errors(nil, e)[0]
-      @code = 500
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
-    end
-    
   end
   
   protected
