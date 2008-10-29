@@ -36,12 +36,7 @@
 #
 
 require 'json'
-class Rest::ValuesController < ApplicationController
-  include InstanceProcessor
-  include Rest::RestValidations
-  include Rest::UrlGenerator
-  
-  before_filter :login_required
+class Rest::ValuesController < Rest::RestController
   
   before_filter :validate_rest_call
   
@@ -59,7 +54,7 @@ class Rest::ValuesController < ApplicationController
       condition = "(instance_id=#{params[:instance_id]} AND detail_id=#{params[:detail_id]})"
       params[:conditions] = add_condition(params[:conditions], condition, :and)
       
-      values = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => DetailValue,
       :instance_id    => params[:instance_id],
       :detail_id      => params[:detail_id],
@@ -69,111 +64,68 @@ class Rest::ValuesController < ApplicationController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => values.to_json(:format => 'json') and return if values}
-    end
-    
-    # If control reaches here, it means no value was found!
-    render :json => "No values found for Detail[#{params[:detail_id]}] of Instance[#{params[:instance_id]}]",
-      :status => 200 and return
+
   end
   
   def show
     begin
-      value = get_single_value(params[:detail_id], params[:id])
+      @resource = get_single_value(params[:detail_id], params[:id])
+      render :response => :GET
     rescue Exception => e
-      render :json => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => value.to_json(:format => 'json') and return}
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
   
   def create
-    values = []
-    urls = []
+    @resource = []
     begin
       DetailValue.transaction do
-        values = save_all_values(params[:instance_id], params[:detail_id], params[:value][:value])
+        @resource = save_all_values(params[:instance_id], params[:detail_id], params[:value][:value])
       end
+      render :response => :POST
     rescue Exception => e
-      respond_to do |format|
-        format.json { render :json => report_errors(nil, e)[0], :status => 400 and return }
-      end
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    
-    values.each do |value|
-      urls.push((@@lookup[:DetailValue] % [@@base_url, value.instance_id, value.detail_id, value.id]) + '.json')
-    end
-    
-    respond_to do |format|
-      format.json { render :json => urls.to_json, :status => 201}
-    end
-    
   end
   
   #NOTE: This method returns nil in an array
   # Updating a value increments the instance number also!
   def update
-    value = nil
+    
     begin
       DetailValue.transaction do
         # Increment the instance version
         increment_instance_version
-        value = update_value(params[:detail_id], 
+        @resource = update_value(params[:detail_id], 
                             params[:id], 
                             {
                               'lock_version' => params[:value][:lock_version],
                               'value' => params[:value][:value]                              
                             })
-        @msg = value.to_json(:format => 'json') if value
-        @msg = '[null]' if !value
-        @code = 200
+        
       end
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
-    rescue MadbException => e
-      @msg = report_errors(nil, e)[0]
-      @code = e.code
+      render :response => :PUT
     rescue Exception => e
-      puts e.backtrace
-      @msg = report_errors(nil, e)[0]
-      @code = 500
-      
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
-    end
-    
   end
   
   def destroy
     begin
       destroy_value(params[:detail_id], params[:id], params[:lock_version])
-      @msg = 'OK'
-      @code = 200
-    
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409      
+      render :response => :DELETE
     rescue Exception => e
-      @msg = report_errors(nil, e)[0]
-      @code = 500
-    end
-    
-
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
