@@ -46,14 +46,30 @@ xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 # extention of the format being requested.
 #
 
+#either a single resource
+# or is array
+  #array is either of instances, or of detail values.
+  
+# If any other thing other then detail values or instances then:
 if @resource.is_a? ActiveRecord::Base
   url_for = "#{@resource.class.name.underscore}_url".to_sym
-  xml.url url(self.send url_for, @resource)
+  url =  url(self.send url_for, @resource)
+  xml.url url
 else
+  # But if these are instances or detail values, then we will return
+  # an array of URLs.
   xml.url(:type => 'array') do
-    @resource.each do |instance|
-      url_for = "#{instance.class.name.underscore}_url".to_sym
-      xml.url url(self.send url_for, instance)
+    # For each of item, generate a URL based on its type. Note that collection
+    # either be totally of instances or totally of detail value and its subclasses
+    @resource.each do |item|
+      if item.is_a? DetailValue
+        url = instance_detail_value_url(:instance_id  => item.instance_id,
+                                        :detail_id    => item.detail_id,
+                                        :id           => item.id)
+      else
+        url = url(self.send("#{item.class.name.underscore}_url".to_sym, item))
+      end
+      xml.url url(url)
     end
   end
 end
