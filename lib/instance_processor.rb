@@ -868,8 +868,13 @@ include Rest::UrlGenerator
     count_sql = "SELECT COUNT(*) FROM #{table.table_name}"
     count_sql += " WHERE #{options[:conditions]}" if options[:conditions]
     
+    if options[:for].superclass == DetailValue or options[:for] == DetailValue
+      options[:for] = 'value' 
+    else
+      options[:for] = options[:for].name.underscore
+    end
     # Resource type is used by partials to render appropiate partial
-    result_set[:resource_type] = options[:for].name.underscore
+    result_set[:resource_type] = options[:for]
     result_set[:resources_returned] = results.length
     result_set[:total_resources] = table.count_by_sql(count_sql)
     result_set[:start_index] = options[:start_index].to_i
