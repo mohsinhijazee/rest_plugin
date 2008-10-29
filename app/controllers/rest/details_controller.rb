@@ -61,7 +61,7 @@
 #  detail[data_type_id]
 #  detail[database_id] optional if provided in database parameter
 
-class Rest::DetailsController < Admin::DetailsController
+class Rest::DetailsController < Rest::RestController
   
   # Not needed. Provided by the parnet controller
   #before_filter :login_required
@@ -75,11 +75,8 @@ class Rest::DetailsController < Admin::DetailsController
   before_filter :check_relationships
   
   # This is required to adjust the parameters.
-  before_filter :adjust_params
-  # Incldue the RestValidations module
-  include Rest::RestValidations
-  include Rest::UrlGenerator
-  include InstanceProcessor
+  #before_filter :adjust_params
+  
   
   # *Description*
   #   Gets all the details
@@ -92,17 +89,17 @@ class Rest::DetailsController < Admin::DetailsController
   def index
     
      begin
+       @parcel = nil
        if params[:database_id]
-         results = get_details_for(:database => params[:database_id])
+         @parcel = get_details_for(:database => params[:database_id])
        elsif params[:entity_id]
-         results = get_details_for(:entity => params[:entity_id])
+         @parcel = get_details_for(:entity => params[:entity_id])
        end
+       
+      render :response => :GETALL
     rescue Exception => e
-      render :json => report_errors(nil, e)[0], :status => 500
-    end
-    
-    respond_to do |format|
-      format.json { render :json => results.to_json(:format => 'json') and return}
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -112,13 +109,11 @@ class Rest::DetailsController < Admin::DetailsController
   #
   def show
     begin
-      super
+      @resource = Detail.find params[:id]
+      render :response => :GET
     rescue Exception => e
-      render :json => report_errors(nil, e)[0], :status => 400 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => @details.to_json(:format => 'json') and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -127,32 +122,21 @@ class Rest::DetailsController < Admin::DetailsController
   #   POST /entities
   #   POST /databases/entities
   def create
-    puts @type_of_call
-    if @type_of_call == :creation
-      begin
-        super
-        if @code == 500
-          @msg, @code = report_errors(@details, nil)
-        end
-      rescue Exception => e
-        @msg, @code = report_errors(@details, e)
-      end
-    elsif @type_of_call == :linkage
-      begin
-        link_detail
-      rescue Exception => e
-        @msg, @code = report_errors(nil, e)
-      end
-    end
+    #FIXME: Look at how we're determining type of call. Not fair I guess
     
-    respond_to do |format|
-      format.json do 
-        if @type_of_call == :creation and @code == 201
-          @msg = [@@lookup[:Detail] % [@@base_url, @details.id] + '.json']
-          
-        end
-        render :json => @msg, :status => @code and return if !performed?
+    begin
+      @resource = nil
+      if @type_of_call == :creation
+        @resource = Detail.new(params[:detail])
+        @resource.save!
+      elsif @type_of_call == :linkage
+          @resource = link_detail
       end
+      
+      render :response => :POST
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end  
@@ -163,17 +147,12 @@ class Rest::DetailsController < Admin::DetailsController
   #   PUT /databases/:entities/:id
   def update
     begin
-      super
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+      @resource = Detail.find params[:id]
+      @resource.update_attributes! params[:detail]
+      render :response => :PUT
     rescue Exception => e
-      @msg, @code = report_errors(@details, e)
-    end
-    
-    respond_to do |format|
-      @msg = @details.to_json(:format => 'json') if @code == 200
-      format.json { render :json => @msg, :status => @code and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -183,41 +162,18 @@ class Rest::DetailsController < Admin::DetailsController
   #   DELETE /databases/entities/:id
   #
   def destroy
-    
-    
-    
-    if @type_of_call == :creation
-      begin
-        #super
+       
+    begin
+      if @type_of_call == :creation      
         destroy_item(Detail, params[:id], params[:lock_version])
-        @msg = 'OK'
-        @code = 200
-      rescue ActiveRecord::StaleObjectError => e
-        @msg = report_errors(nil, e)[0]
-        @code = 409
-      rescue Exception => e
-        @msg, @code = report_errors(nil, e)
-      end
-    elsif @type_of_call == :linkage
-      begin
+      elsif @type_of_call == :linkage
         unlink_detail
-        @msg = 'OK'
-        @code = 200
-      rescue Exception => e
-        #puts "CAME HERE.........#{@type_of_call}"
-        @msg, @code = report_errors(nil, e)
       end
+      render :response => :DELETE
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    
-    #render :json => @msg, :status => @code and return
-    
-    
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
-    end
-    
   end
   
   protected
@@ -505,7 +461,7 @@ class Rest::DetailsController < Admin::DetailsController
       
 
     if entity.details.collect{|d| d.detail_id.to_i}.include?  params[:detail_id].to_i
-      raise "Detail[#{params[:detail_id]}] already linked to Entity[#{entity.id}]"
+      raise BadResource.new, "Detail[#{params[:detail_id]}] already linked to Entity[#{entity.id}]"
       #@msg = report_error(nil,'Bad Request (detail already belongs to the entity)')[0] 
       #@code = 400
       #return
@@ -530,10 +486,9 @@ class Rest::DetailsController < Admin::DetailsController
     entity_detail.detail_status = status
     
     entity_detail.save!
-   
-    @msg = 'OK'
-    @code = 200
     
+    # return that detail object
+    return detail
   end
   
   # *Description*
@@ -578,6 +533,7 @@ class Rest::DetailsController < Admin::DetailsController
       results[:order_by] = nil
       results[:direction] = nil
       results[:resources] = entity.details.dup
+      results[:resource_type] = results[:resources][0].class.name.underscore
       return results
     end
   end
