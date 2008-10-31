@@ -42,24 +42,26 @@
 
 xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 
-xml.resource_parcel do
-  # Record the meta information about the parcel
-  xml.total_resources @parcel[:total_resources].to_i
-  xml.resources_returned  @parcel[:resources_returned].to_i
-  xml.start_index @parcel[:start_index].to_i
-  xml.order_by @parcel[:order_by].to_i
-  xml.direction @parcel[:direction]
-  xml.conditions @parcel[:conditions]
-  
-  # Render the appropiate resource template from views/rest
-  resources = render( :partial => @parcel[:resource_type] + '.xml.builder', 
-                      :collection => @parcel[:resources])
+# Render the appropiate resource template from views/rest
+resources = render( :partial => @parcel[:resource_type] + '.xml.builder', 
+                    :collection => @parcel[:resources])
 
-  # Start a resources tag with attribute 'type' set to 'array'
-  # And then dump the resutls of the previous rendering as content of it.
-  xml.resources(:type => 'array') do
-    xml << resources
+# Now delete the resources
+@parcel.delete :resources
+
+# Convert the parcel to XML via xml builder
+@parcel.to_xml(:builder => xml,       :root => 'resource_parcel', 
+                :dasherize => false,  :skip_instruct => true) do |xml_builder|
+                
+  xml_builder.resources(:type => 'array') do
+    xml_builder << resources
   end
+end
+                
+             
+# Now place the resouces also!
+#xml << resources
+  
 
 # Approach two
 #  xml.resources(:type => 'array') do
@@ -71,4 +73,4 @@ xml.resource_parcel do
 #    end
 #  end
   
-end
+
