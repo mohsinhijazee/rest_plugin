@@ -43,38 +43,57 @@
 # Add any attributes that should not be part of the representation here
 to_be_skipped = [
                   :id,
-                  :account_id
+                  :database_id,
+                  :data_type_id,
+                  :status_id
                 ]
 
-hash = database.attributes
-to_be_skipped.each {|attr| hash.delete attr }
 
-hash[:url]             = url(database_url(database))
-hash[:account_url]    =  url(account_url(:id => database.account_id))
-hash[:entities_url]    = url(database_entities_url(:database_id => database.id))
-hash[:details_url]     = url(database_details_url(:database_id => database.id))
+# Add all the URLs to this model
+hash = detail.attributes
 
-hash.to_xml  :builder => xml,
-             :root => 'database', 
-             :dasherize => false, 
-             :skip_instruct => true
+hash[:url]             = url(detail_url(detail))
+hash[:database_url]    = url(database_url(:id => detail.database_id))
+hash[:data_type_url]   = url(data_type_url(:id => detail.data_type_id))
+hash[:status_url]      = url(detail_status_url(:id => detail.status_id)) if detail.status_id
 
-##FIXME: udner a resource tag? or account_type tag?
-##resource tag adds an additional key of type to JSON
-##xml.resource(:type => 'account_type') do
-#xml.database do
+if detail.data_type.name == 'madb_choose_in_list'
+  hash[:propositions_url]  = url(detail_propositions_url(:detail_id => detail.id))
+end
+
+
+# Remove any keys
+to_be_skipped.each {|attr| hash.delete attr} 
+
+hash.to_xml  :builder        => xml,
+             :root           => 'detail', 
+             :dasherize      => false, 
+             :skip_instruct  => true
+
+# OLD APPROACH
+###########################
+#xml.detail do
 #  # The URL of the resource
-#  xml.url url(database_url(database))
+#  
+#  
+#  
+#  xml.url url(detail_url(detail))
 #  
 #  # List all the attributes
-#  database.attributes.each do |attr, value|
+#  detail.attributes.each do |attr, value|
 #    next if to_be_skipped.include? attr
-#    xml.tag!(attr.to_sym, value)
+#    #xml.tag!(attr.to_sym, value, :type => 'string')
+#    typed_tag xml,  attr, value
 #  end
 #  
 #  # Add any other URLs here.
-#  xml.account_url  url(account_url(:id => database.account_id))
-#  xml.entities_url url(database_entities_url(:database_id => database.id))
-#  xml.details_url  url(database_details_url(:database_id => database.id))
-#
+#  xml.database_url      url(database_url(:id => detail.database_id))
+#  xml.data_type_url     url(data_type_url(:id => detail.data_type_id))
+#  xml.status_url        url(detail_status_url(:id => detail.status_id)) if detail.status_id
+#  
+#  # URL for propositions if applicable
+#  if detail.data_type.name == 'madb_choose_in_list'
+#    xml.propositions_url  url(detail_propositions_url(:detail_id => detail.id))
+#  end
+#  
 #end

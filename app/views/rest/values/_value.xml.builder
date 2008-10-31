@@ -42,31 +42,49 @@
 
 # Add any attributes that should not be part of the representation here
 to_be_skipped = [
-                  'id',
-                  'detail_id',
-#                 'type',
-#                 'created_at',
-#                 'updated_at',
-                  'instance_id'
+                  :id,
+                  :detail_id,
+#                 :type,
+#                 :created_at,
+#                 :updated_at,
+                  :instance_id
 
                 ]
+                
+hash = value.attributes
+to_be_skipped.each {|attr| hash.delete attr}
+
+hash[:url] =  url(instance_detail_value_url(  :instance_id => value.instance_id, 
+                                          :detail_id => value.detail_id, 
+                                          :id => value.id))
+hash[:instance_url] = url(instance_url(:id => value.instance_id))                                      
+hash[:detail_url] = url(detail_url(:id => value.detail_id))
+
+hash.to_xml  :builder         => xml,
+             :root            => 'value', 
+             :dasherize       => false, 
+             :skip_instruct   => true
+            
+          
+
+
 #FIXME: udner a resource tag? or account_type tag?
 #resource tag adds an additional key of type to JSON
 #xml.resource(:type => 'account_type') do
-xml.value do
-  # The URL of the resource
-  xml.url url(instance_detail_value_url(  :instance_id => value.instance_id, 
-                                          :detail_id => value.detail_id, 
-                                          :id => value.id))
-  
-  # List all the attributes
-  value.attributes.each do |attr, val|
-    next if to_be_skipped.include? attr
-    xml.tag!(attr.to_sym, val)
-  end
-  
-  # Add any other URLs here.
-  xml.instance_url url(instance_url(:id => value.instance_id))
-  xml.detail_url url(detail_url(:id => value.detail_id))
-
-end
+#xml.value do
+#  # The URL of the resource
+#  xml.url url(instance_detail_value_url(  :instance_id => value.instance_id, 
+#                                          :detail_id => value.detail_id, 
+#                                          :id => value.id))
+#  
+#  # List all the attributes
+#  value.attributes.each do |attr, val|
+#    next if to_be_skipped.include? attr
+#    xml.tag!(attr.to_sym, val)
+#  end
+#  
+#  # Add any other URLs here.
+#  xml.instance_url url(instance_url(:id => value.instance_id))
+#  xml.detail_url url(detail_url(:id => value.detail_id))
+#
+#end

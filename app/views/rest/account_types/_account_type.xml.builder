@@ -42,21 +42,17 @@
 
 # Add any attributes that should not be part of the representation here
 to_be_skipped = [
-                  'id'
+                  :id
                 ]
-#FIXME: udner a resource tag? or account_type tag?
-#resource tag adds an additional key of type to JSON
-#xml.resource(:type => 'account_type') do
-xml.account_type do
-  # The URL of the resource
-  xml.url url(account_type_url(account_type))
-  
-  # List all the attributes
-  account_type.attributes.each do |attr, value|
-    next if to_be_skipped.include? attr
-    xml.tag!(attr.to_sym, value)
-  end
-  
-  # Add any other URLs here.
+                
+hash = account_type.attributes
+to_be_skipped.each {|attr| hash.delete attr }
 
-end
+# Add any URLs
+hash[:url] = url(account_type_url(account_type))
+
+# Convert to XML
+hash.to_xml  :builder => xml,
+             :root => 'account_type', 
+             :dasherize => false, 
+             :skip_instruct => true
