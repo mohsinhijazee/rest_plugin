@@ -53,7 +53,7 @@ xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 # If any other thing other then detail values or instances then:
 if @resource.is_a? ActiveRecord::Base
   url_for = "#{@resource.class.name.underscore}_url".to_sym
-  url =  url(self.send url_for, @resource)
+  url =  url(self.send( url_for, @resource))
   xml.url url
 else
   # But if these are instances or detail values, then we will return
