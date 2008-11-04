@@ -40,11 +40,8 @@
 #
 #FIXME: GET /entities/relations should check whether the entity belongs to the 
 # user or not
-class Rest::RelationsController < Admin::EntitiesController
+class Rest::RelationsController < Rest::RestController
   
-  include Rest::RestValidations
-  include InstanceProcessor
-  include Rest::UrlGenerator
   
   # Not needed. Provided by the parent controller
   #before_filter :login_required
@@ -67,7 +64,7 @@ class Rest::RelationsController < Admin::EntitiesController
     begin
       condition = "(parent_id=#{params[:entity_id]} or child_id=#{params[:entity_id]})"
       params[:conditions] = add_condition(params[:conditions], condition, :and)
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => Relation,
       :start_index    => params[:start_index],
       :max_results    => params[:max_results],
@@ -75,13 +72,11 @@ class Rest::RelationsController < Admin::EntitiesController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    
-    respond_to do |format|
-      format.json { render :json => records.to_json(:format => 'json') and return}
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
@@ -91,18 +86,15 @@ class Rest::RelationsController < Admin::EntitiesController
   # GET /databases/:database_id/entities/:entity_id/relations/:id
   def show
     begin
-      get_relation(params[:id], params[:entity_id])
+      @resource = get_relation(params[:id], params[:entity_id])
+      render :response => :GET
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-      render :json => @msg, :status => @code and return
+      @error = process_exception(e)
+      render :response => @error
     end
     
  
-    respond_to do |format|
-      format.json { render :json => @relations.to_json(:format => 'json') and return }
-    end
-    
-    
+
   end
   
   
@@ -111,23 +103,15 @@ class Rest::RelationsController < Admin::EntitiesController
   # POST /databases/entities/relations
   def create
     begin
-      add_link
-      if @code == 400
-        @msg, @code = report_errors(@relation, nil)
-      end
+      @resource = Relation.new(params[:relation])
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-#      render :json => @msg, :status => @code and return
+      @error = process_exception(e)
+      render :response => :error
     end
+      
     
-    respond_to do |format|
-      format.json do 
-        @msg = [(@@lookup[:Relation] % [@@base_url, @relation.id]) + '.json'] if @code == 201
-        render :json => @msg, :status => @code and return 
-      
-      end
-      
-    end
     
   end
   
@@ -136,22 +120,12 @@ class Rest::RelationsController < Admin::EntitiesController
   # GET /databases/:database_id/entities/:entity_id/relations/:id
   def update
     begin
-      add_link
-      if @code == 400
-        @msg, @code = report_errors(@relation, nil)
-      end
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+      @resource = Relation.find params[:id]
+      @resource.update_attributes!(params[:relation])
+      render :response => :PUT
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-    end
-    
-    respond_to do |format|
-      format.json do 
-        @msg = Relation.find(params[:id]).to_json(:foramt => 'json') if @code == 200
-        render :json => @msg, :status => @code and return 
-      end
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -159,33 +133,12 @@ class Rest::RelationsController < Admin::EntitiesController
   def destroy
     
     begin
-#    This code is not needed because check_relationships filter checks this.      
-#    if params[:entity_id]
-#      #check if the link to delete id asked from a related entity (source_id)
-#      params_validity_count = Relation.count(:conditions => "id = #{params[:id]} and (parent_id=#{params[:entity_id]} or child_id=#{params[:entity_id]})")         
-#      if params_validity_count.to_i!=1
-#        raise BadResource.new, 'Bad Reqeust (Multiple relation records found.)' 
-#      end
-#    end
-      
       destroy_item(Relation, params[:id], params[:lock_version])
-      @msg = 'OK'
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
-    rescue MadbException => e
-      @msg = report_errors(nil, e)[0]
-      @code = e.code
+      render :response => :DELETE
     rescue Exception => e
-      @msg = report_errors(nil, e)[0]
-      @code = 500
-    end
-    
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
-    end
+      @error = process_exception(e)
+      render :response => :error
+    end    
   end
   
   
@@ -453,12 +406,13 @@ class Rest::RelationsController < Admin::EntitiesController
   #
   def get_relation(relation_id, entity_id = nil)
     if entity_id
-      @relations = Relation.find(:first, :conditions => 
+      relation = Relation.find(:first, :conditions => 
           ["id = ? and child_id = ? or parent_id = ?", relation_id, entity_id, entity_id])
     else
-      @relations = Relation.find(:first, :conditions => 
+      relation = Relation.find(:first, :conditions => 
         ["id = ?", relation_id])
     end
+    return relation
   end
   
   protected
