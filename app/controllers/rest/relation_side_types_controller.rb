@@ -21,20 +21,15 @@
 #   This exposes the relation side types as a REST resource
 #
 
-class Rest::RelationSideTypesController < ApplicationController
-  
-  include Rest::RestValidations
-  include InstanceProcessor
-  
-  before_filter :login_required
-  
+class Rest::RelationSideTypesController < Rest::RestController
+    
   before_filter :validate_rest_call
   
   before_filter :check_ids
   
   def index
     begin
-    @side_types = get_paginated_records_for(
+    @parcel = get_paginated_records_for(
       :for            => RelationSideType,
       :start_index    => params[:start_index],
       :max_results    => params[:max_results],
@@ -42,20 +37,21 @@ class Rest::RelationSideTypesController < ApplicationController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
+      @error = process_exception(e)
+      render :response => :error
     end
     
-    respond_to do |format|
-      format.json { render :json => @side_types.to_json(:format => 'json') and return }
-    end
   end
   
   def show
-    @side_types = RelationSideType.find(params[:id])
-    
-    respond_to do |format|
-      format.json { render :json => @side_types.to_json(:format => 'json') and return }
+    begin
+      @resource = RelationSideType.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
