@@ -29,12 +29,7 @@
 
 require 'json'
 
-class Rest::LinksController < ApplicationController
-  include Rest::RestValidations
-  include Rest::UrlGenerator
-  include InstanceProcessor
-  
-  before_filter :login_required
+class Rest::LinksController < Rest::RestController
   
   before_filter :validate_rest_call
   
@@ -54,7 +49,7 @@ class Rest::LinksController < ApplicationController
       conditions = "(parent_id=#{params[:instance_id]} or child_id=#{params[:instance_id]})"
       params[:conditions] = add_condition(params[:conditions], conditions, :and) 
       
-      results = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => Link,
       :start_index    => params[:start_index],
       :max_results    => params[:max_results],
@@ -62,49 +57,35 @@ class Rest::LinksController < ApplicationController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
+      @error = process_exception(e)
+      render :response => :error
     end
     
-    respond_to do |format|
-      format.json { render :json => results.to_json(:format => 'json') and return }
-    end
+
   end
   
   def show
-    @links = Link.find(params[:id])
-    
-    respond_to do |format|
-      format.json {render :json => @links.to_json(:format => 'json') and return }
+    begin
+      @resource = Link.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   def create
-    @link = Link.new(params[:link])
-    puts @link.relation_id
-    puts @link.child_id
-    puts @link.parent_id
     
     begin
-      @link.save!
-      @msg = 'OK'
-      @code = 201
+      @resource = Link.new(params[:link])
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-      @msg, @code = report_errors(@link, e)
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    #@msg = 'TEST'
-    #@code = 908
-    
-    respond_to do |format|
-      format.json do 
-        @msg = [(@@lookup[:Link] % [@@base_url, @link.id]) + '.json'] if @code == 201
-        render :json => @msg, :status => @code and return 
-      end
-    end
-      
-    
-    
   end
   
   def update
@@ -112,20 +93,14 @@ class Rest::LinksController < ApplicationController
   end
   
   def destroy
-    @link = Link.find(params[:id])
     begin
-      @link.destroy
-      @msg = 'OK'
-      @code = 200
+      @resource = Link.find(params[:id])
+      @resource.destroy
+      render :response => :DELETE
     rescue Exception => e
-      @msg = report_errors(nil, e)[0]
-      @code = 500
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code}
-    end
-    
   end
   
 
