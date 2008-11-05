@@ -27,13 +27,8 @@
  
 
 
-class Rest::DataTypesController < ApplicationController
- include Rest::RestValidations
- include InstanceProcessor
- include Rest::UrlGenerator
- 
+class Rest::DataTypesController < Rest::RestController
 
-  before_filter :login_required
   
   before_filter :validate_rest_call
   
@@ -42,7 +37,7 @@ class Rest::DataTypesController < ApplicationController
   # GET /datatypes
   def index
     begin
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => DataType,
       :start_index    => params[:start_index],
       :max_results     => params[:max_results],
@@ -50,23 +45,22 @@ class Rest::DataTypesController < ApplicationController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => records.to_json(:format => 'json'), :status => 200 and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   # GET /datatypes/:id
   def show
-    @datatypes = DataType.find(params[:id].to_i)
-    
-    respond_to do |format|
-      format.json { render :json => @datatypes.to_json(:format => 'json'), :status => 200 and return}
+    begin
+      @resource = DataType.find params[:id]
+      render :response => :GET  
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
-    
   end
   
   protected
