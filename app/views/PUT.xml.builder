@@ -30,6 +30,7 @@ xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 
 resource_type = @resource.class.name.underscore
 resource_type = 'value'if @resource.is_a? DetailValue
+resource_type = 'proposition'if @resource.is_a? DetailValueProposition
 
 resource_template = resource_type + '.xml.builder'
   resources = render(:partial => resource_template, 
