@@ -30,13 +30,8 @@
 #  NOTE:
 # In case of nested calls, the detail_id provided in the path is taken if
 # resource does not mention it.
-class Rest::DetailValuePropositionsController < ApplicationController
+class Rest::PropositionsController < Rest::RestController
 
-  include Rest::RestValidations
-  include InstanceProcessor
-  include Rest::UrlGenerator
-  
-  before_filter :login_required
   before_filter :validate_rest_call
   before_filter :check_ids
   before_filter :check_relationships
@@ -45,97 +40,64 @@ class Rest::DetailValuePropositionsController < ApplicationController
   def index
     begin
       params[:conditions] = add_condition(params[:conditions], "detail_id=#{params[:detail_id]}", :and)
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => DetailValueProposition,
       :start_index    => params[:start_index],
-      :max_results     => params[:max_results],
+      :max_results    => params[:max_results],
       :order_by       => params[:order_by],
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => records.to_json(:format => 'json') and return}
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   def show
-    @props = DetailValueProposition.find(params[:id])
-    
-    respond_to do |format|
-      format.json { render :json => @props.to_json(:format => 'json') and return}
+    begin
+      @resource = DetailValueProposition.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   def create
-    urls = nil
-    begin
-      urls = create_propostions(params[:detail_value_proposition][:detail_id],params[:detail_value_proposition][:value])
-      #@msg = urls.to_json.gsub('\\', '')
-      @code = 201
-    rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-    end
     
-    respond_to do |format|
-      format.json do
-        if @code == 201
-          urls.collect! { |item|  item + '.json'}
-          @msg = urls.to_json
-        end
-        render :json => @msg, :status => @code   
-      end
-    end
+    begin
+      @resource = create_propostions(params[:detail_value_proposition][:detail_id],params[:detail_value_proposition][:value])
+      render :response => :POST
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
+    end 
   end
   
   def update
-    @prop = DetailValueProposition.find(params[:id])
-
     begin    
-      if @prop.update_attributes(
+      @resource = DetailValueProposition.find(params[:id])
+      @resource.update_attributes!(
           :value => params[:detail_value_proposition][:value],
           :lock_version => params[:detail_value_proposition][:lock_version]
         )
-        @msg = @prop.to_json(:format => 'json')
-        @code = 200
-      else
-        @msg, @code= report_errors(@prop, nil)
-      end
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(@prop, e)[0]
-      @code = 409
+       
+      render :response => :PUT
     rescue Exception => e
-      @msg = report_errors(@prop, e)[0]
-      @code = 400
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code }
-    end
-    
   end
   
   def destroy
     begin
       destroy_item(DetailValueProposition, params[:id], params[:lock_version])
-      @msg = 'OK'
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
-    rescue MadbException => e
-      @msg = report_errors(nil, e)[0]
-      @code = e.code
+      render :response => :DELETE
     rescue Exception => e
-      @msg = report_errors(nil, e)[0]
-      @code = 500
-    end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code}
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -245,23 +207,6 @@ class Rest::DetailValuePropositionsController < ApplicationController
     
     
     return true
-  end
-  
-  #FIXME: Should be moved elsewhere?
-  def create_propostions(detail_id, propositions)
-    urls = []
-    
-    DetailValueProposition.transaction do 
-      propositions.each do |prop|
-        p = DetailValueProposition.new
-        p.detail_id = detail_id
-        p.value = prop
-        p.save!
-        #ids.push(p.id)
-        urls.push(@@lookup[:DetailValueProposition] % [@@base_url, p.id]) 
-      end
-    end
-    return urls
   end
   
   protected
