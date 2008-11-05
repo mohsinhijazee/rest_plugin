@@ -92,7 +92,7 @@ enable_rest = true
     end
     
     resources :details, :singular => 'detail', :controller => 'rest/details' do |detail|
-      detail.resources :propositions, :singular => 'proposition', :controller => 'rest/detail_value_propositions'
+      detail.resources :propositions, :singular => 'proposition', :controller => 'rest/propositions'
       # Useless
       #detail.resources :values, :singular => 'value', :controller => 'rest/values'
     end
@@ -120,7 +120,7 @@ enable_rest = true
     resources :account_types, :singular => 'account_type', :controller => 'rest/account_types'
     
     
-    resources :propositions, :singular => 'proposition', :controller => 'rest/detail_value_propositions'
+    resources :propositions, :singular => 'proposition', :controller => 'rest/propositions'
     resources :detail_statuses, :singular => 'detail_status', :controller => 'rest/detail_statuses'
     
     
