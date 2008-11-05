@@ -67,7 +67,9 @@ else
                                         :detail_id    => item.detail_id,
                                         :id           => item.id)
       else
-        url = url(self.send("#{item.class.name.underscore}_url".to_sym, item))
+        resource_type = item.class.name.underscore
+        resource_type = 'proposition' if item.class == DetailValueProposition
+        url = url(self.send("#{resource_type}_url".to_sym, item))
       end
       xml.url url(url)
     end
