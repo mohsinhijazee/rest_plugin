@@ -790,6 +790,21 @@ include Rest::UrlGenerator
     #class_from_name(Detail.find(detail_id).data_type.class_name).delete(value_id)
   end
   
+ 
+  def create_propostions(detail_id, propositions)
+    props = []
+    
+    DetailValueProposition.transaction do 
+      propositions.each do |prop|
+        p = DetailValueProposition.new
+        p.detail_id = detail_id
+        p.value = prop
+        p.save!
+        props << p
+      end
+    end
+    return props
+  end
 
   # *Description*
   # Returns the paginated records for the given resorces
@@ -868,13 +883,13 @@ include Rest::UrlGenerator
     count_sql = "SELECT COUNT(*) FROM #{table.table_name}"
     count_sql += " WHERE #{options[:conditions]}" if options[:conditions]
     
-    if options[:for].superclass == DetailValue or options[:for] == DetailValue
-      options[:for] = 'value' 
-    else
-      options[:for] = options[:for].name.underscore
-    end
+    
+    resource_type = options[:for].name.underscore
+    resource_type = 'value' if options[:for].superclass == DetailValue or options[:for] == DetailValue
+    resource_type = 'proposition' if options[:for] == DetailValueProposition
+    
     # Resource type is used by partials to render appropiate partial
-    result_set[:resource_type] = options[:for]
+    result_set[:resource_type] = resource_type
     result_set[:resources_returned] = results.length
     result_set[:total_resources] = table.count_by_sql(count_sql)
     result_set[:start_index] = options[:start_index].to_i
