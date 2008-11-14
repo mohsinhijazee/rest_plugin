@@ -27,4 +27,24 @@ module Rest::RestHelper
     return url if params[:format].nil?
     return "#{url}.#{params[:format]}"
   end
+  
+  # *Description*
+#  This method takes a hash which describes a detail valu.e
+# if the datatype is the one which holds files, then value is replaced with URL
+# instead of the YAML. This is a workaround and it should not be this way.
+# get_records_for should populate value items with proper class objects instead
+# of hashes. This will eliminate this approach where we have to list every external 
+# datatype.
+def process_value(item)
+  attachment_types = ['swf_attachment', 
+                      'madb_file_attachment', 
+                      'madb_s3_attachment']
+                    
+ if attachment_types.include? item[:data_type]
+   download_url = "#{request.protocol}#{request.host}#{request.port_string}/app/file_attachments/download/#{item[:id]}"
+   item[:value] = download_url
+ end
+   return item[:value]
+end
+
 end
