@@ -32,7 +32,7 @@ class Rest::RestController < ActionController::Base
   
   # We neet to replace with REST authentication. For now, its cookie based.
   # No authentication required for now
-  #before_filter :login_required
+  before_filter :login_required
   
   #before_filter :log_me_in
   #after_filter :log_me_out
@@ -43,6 +43,7 @@ class Rest::RestController < ActionController::Base
   #  pure REST philosophy so will not be supplying cookies with our reqeusts sometimes.
   #  So for those times, it should fall back to some user.
   def log_me_in
+    puts headers
     session['user'] = User.find(:first, :conditions => ["login='mohsinhijazee@zeropoint.it'"])
   end
   
