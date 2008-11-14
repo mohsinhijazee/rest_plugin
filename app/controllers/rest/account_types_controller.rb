@@ -77,7 +77,7 @@ class Rest::AccountTypesController < Rest::RestController
   def update
     begin
       @resource = AccountType.find(params[:id])
-      @resource.update_attributes!(params[:account_type][:resource])
+      @resource.update_attributes!(params[:account_type])
       render :response => :PUT
     rescue Exception => e
       @error = process_exception(e)
@@ -108,7 +108,7 @@ class Rest::AccountTypesController < Rest::RestController
         :status => 400 and return false if !params[:account_type]
       
       begin
-        params[:account_type] = JSON.parse(params[:account_type])
+        params[:account_type] = JSON.parse(params[:account_type])[:account_type]
         params[:account_type] = substitute_ids(params[:account_type])
         check_id_conflict(params[:account_type], params[:id])
       rescue Exception => e
