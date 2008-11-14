@@ -48,6 +48,8 @@ hash.each do |key, value|
       item[:url] = url(instance_detail_value_url(:instance_id => instance[:id], 
                                             :detail_id => item[:detail_id], :id => item[:id]))
       item[:detail_url] = url(detail_url(item[:detail_id]))
+      #puts "Data type of the item is #{item[:data_type]}"
+      item[:value] = process_value(item)
       value_attributes_to_skipped.each {|attr| item.delete attr}
     end
   end
@@ -58,6 +60,8 @@ hash.to_xml  :builder       => xml,
              :root          => 'instance',
              :dasherize     => false, 
              :skip_instruct => true
+
+
 
 #xml.instance do
 #  # The URL of the resource
