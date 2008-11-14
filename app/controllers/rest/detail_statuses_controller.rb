@@ -22,20 +22,15 @@
 #
 
 #FIXME Write tests for pagination
-class Rest::DetailStatusesController < ApplicationController
-  
-  include Rest::RestValidations
-  include InstanceProcessor
-  
-  before_filter :login_required
-  
+class Rest::DetailStatusesController < Rest::RestController
+ 
   before_filter :validate_rest_call
   
   before_filter :check_ids
   
   def index
     begin
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => DetailStatus,
       :start_index    => params[:start_index],
       :max_results     => params[:max_results],
@@ -43,20 +38,20 @@ class Rest::DetailStatusesController < ApplicationController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => records.to_json(:format => 'json') and return }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   def show
-    @status = DetailStatus.find(params[:id])
-    
-    respond_to do |format|
-      format.json { render :json => @status.to_json(:format => 'json') and return }
+    begin
+      @resource = DetailStatus.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
