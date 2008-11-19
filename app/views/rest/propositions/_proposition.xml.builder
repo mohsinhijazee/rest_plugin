@@ -48,7 +48,7 @@ to_be_skipped = [
 
 
 # Add all the URLs to this model
-hash = proposition.attributes
+hash = proposition.attributes.symbolize_keys
 
 hash[:url]            = url(proposition_url(proposition))
 hash[:detail_url]      = url(detail_url(:id => proposition.detail_id))

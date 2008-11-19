@@ -51,7 +51,7 @@ to_be_skipped = [
 
 
 # Add all the URLs to this model
-hash = relation.attributes
+hash = relation.attributes.symbolize_keys
 
 hash[:url]                      = url(relation_url(relation))
 hash[:child_url]                = url(entity_url(:id => relation.child_id))

@@ -48,7 +48,7 @@ to_be_skipped = [
 
 
 # Add all the URLs to this model
-hash = data_type.attributes
+hash = data_type.attributes.symbolize_keys
 
 hash[:url] = url(data_type_url(data_type))
   

@@ -32,7 +32,7 @@ to_be_skipped = [
 
 value_attributes_to_skipped = [:id, :detail_id]
 
-hash = instance.attributes
+hash = instance.attributes.symbolize_keys
 to_be_skipped.each {|attr| hash.delete attr}
 
 # Add URLs

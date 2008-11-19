@@ -50,7 +50,7 @@ to_be_skipped = [
 
 
 # Add all the URLs to this model
-hash = detail.attributes
+hash = detail.attributes.symbolize_keys
 
 hash[:url]             = url(detail_url(detail))
 hash[:database_url]    = url(database_url(:id => detail.database_id))

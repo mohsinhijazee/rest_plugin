@@ -46,7 +46,7 @@ to_be_skipped = [
                   :account_id
                 ]
 
-hash = database.attributes
+hash = database.attributes.symbolize_keys
 to_be_skipped.each {|attr| hash.delete attr }
 
 hash[:url]             = url(database_url(database))

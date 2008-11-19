@@ -51,7 +51,7 @@ to_be_skipped = [
 
                 ]
                 
-hash = value.attributes
+hash = value.attributes.symbolize_keys
 to_be_skipped.each {|attr| hash.delete attr}
 
 hash[:url] =  url(instance_detail_value_url(  :instance_id => value.instance_id, 

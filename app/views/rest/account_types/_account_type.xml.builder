@@ -45,8 +45,8 @@ to_be_skipped = [
                   :id
                 ]
                 
-hash = account_type.attributes
-to_be_skipped.each {|attr| hash.delete attr }
+hash = account_type.attributes.symbolize_keys
+to_be_skipped.each {|attr| hash.delete attr.to_s }
 
 # Add any URLs
 hash[:url] = url(account_type_url(account_type))

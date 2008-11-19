@@ -48,7 +48,7 @@ to_be_skipped = [
 
 
 # Add all the URLs to this model
-hash = relation_side_type.attributes
+hash = relation_side_type.attributes.symbolize_keys
 
 hash[:url]                      = url(relation_side_type_url(relation_side_type))
 

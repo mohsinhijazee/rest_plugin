@@ -47,7 +47,7 @@ to_be_skipped = [
 
 
 # Add all the URLs to this model
-hash = detail_status.attributes
+hash = detail_status.attributes.symbolize_keys
 
 hash[:url]  = url(detail_status_url(detail_status))
 

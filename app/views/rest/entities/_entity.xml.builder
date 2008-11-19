@@ -46,7 +46,7 @@ to_be_skipped = [
                   :account_id
                 ]
 # Add all the URLs to this model
-hash = entity.attributes
+hash = entity.attributes.symbolize_keys
 
 hash[:url]             = url(entity_url(entity))
 hash[:details_url]     = url(entity_details_url(:entity_id => entity.id))
