@@ -42,9 +42,13 @@ def process_value(item)
                     
  if attachment_types.include? item[:data_type]
    download_url = "#{request.protocol}#{request.host}#{request.port_string}/app/file_attachments/download/#{item[:id]}"
-   item[:value] = download_url
+   
+   file_props = YAML::load item[:value]
+   file_props[:download_url] = download_url
+   item[:value] = file_props
  end
    return item[:value]
 end
+
 
 end
