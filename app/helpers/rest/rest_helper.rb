@@ -36,7 +36,7 @@ module Rest::RestHelper
 # of hashes. This will eliminate this approach where we have to list every external 
 # datatype.
 def process_value(item)
-  attachment_types = ['swf_attachment', 
+  attachment_types = ['madb_swf_attachment', 
                       'madb_file_attachment', 
                       'madb_s3_attachment']
                     
