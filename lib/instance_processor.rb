@@ -679,7 +679,7 @@ include Rest::UrlGenerator
       #instance[:url] = @@lookup[:Instance] % [@@base_url, id.to_s] + format
       #instance[:entity_url] = entity_url
       #instance[:details_url] = details_url
-      #instance[:links_url] = links_url      
+      #instance[:links_url] = links_url      Replaces underscores with dashes in the string.
       
       instance[:id] = id
       instance[:entity_id] = entity_id
@@ -689,7 +689,13 @@ include Rest::UrlGenerator
       record.each do |col_name, values|
         # if its lock_version, its reserved name, skip it!
         next if col_name.to_s == 'lock_version'
-        instance[col_name] = json_for_values(values, options)
+        # Here we alter the detail name as under:
+        # * If the first letter is digit, then append an _
+        # * Replace all the spaces with _
+        
+        detail_name = col_name.gsub(' ', '_')
+        detail_name.insert!(0, '_') if detail_name[/^\d/]
+        instance[detail_name.to_sym] = json_for_values(values, options)
       end
       # Add to instances
       instances << instance
