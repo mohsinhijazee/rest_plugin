@@ -1030,7 +1030,10 @@ include Rest::UrlGenerator
     # the count of the records with conditiosn applicable.
     # This is needed because just teh lenghth of the array prepared 
     count_query = "SELECT COUNT(*) FROM #{crosstab_query[:query]} #{conditions}"
-    record_count = ActiveRecord::Base.connection.execute(count_query)[0][0]
+    
+    
+    #record_count = ActiveRecord::Base.connection.execute(count_query)[0][0]
+    record_count = ActiveRecord::Base.connection.execute(count_query)[0]['count'].to_i
     
     
     # If the options for pagination are provided
@@ -1039,9 +1042,18 @@ include Rest::UrlGenerator
       query+=  " LIMIT #{options[:max_results]}" if options[:max_results]
     end
     
+    
     ids = ActiveRecord::Base.connection.execute(query)
     
-    a = ids.result.collect{|id| id[0].to_i}
+    #NOTE: PGResult used to have a result method returning an array but this time
+    # This is not the case after a gem chanced which I am not able to track. In 
+    # order to make the code up and running for now, I've covered both the scenarios.
+    a = nil
+    if ids.respond_to? :result
+      a = ids.result.collect{|id| id[0].to_i}
+    else
+      a = ids.collect {|id| id['id'].to_i }
+    end
     
     return {:instance_ids => a, :resources_returned => a.length.to_i, :total_resources => record_count.to_i}
   end
