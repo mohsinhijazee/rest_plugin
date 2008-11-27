@@ -753,13 +753,14 @@ include Rest::UrlGenerator
       case values[:data_type]
       when 'madb_integer'
         json_value[:value] = value[:value].to_i
-      when 'madb_s3_attachment'
-        s3 = S3Attachment.find(value[:id])
-        json_value[:value] = s3.download_url
-      when 'madb_file_attachment'
-        # In case of simple FileAttachment, provide the link of this detail value
-        # So that user can download it from there
-        json_value[:value] = "#{@@base_url}/details/#{values[:detail_id]}/values/#{value[:id]}"
+# We dont touch this thing and let the information passed on above levels to be dealt.        
+#      when 'madb_s3_attachment'
+#        s3 = S3Attachment.find(value[:id])
+#        json_value[:value] = s3.download_url
+#      when 'madb_file_attachment'
+#        # In case of simple FileAttachment, provide the link of this detail value
+#        # So that user can download it from there
+#        json_value[:value] = "#{@@base_url}/details/#{values[:detail_id]}/values/#{value[:id]}"
       else
         json_value[:value] = value[:value]
       end
