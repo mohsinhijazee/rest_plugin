@@ -88,7 +88,9 @@ class Rest::RestController < ActionController::Base
       yaml = Hash.from_xml(render_to_string(:template => opts[:to_yaml], :layout => false)).to_yaml
       render :text => yaml, :layout => false, :status => opts[:status]
     elsif opts[:to_json] then
-      content = Hash.from_xml(render_to_string(:template => opts[:to_json], :layout => false)).to_json
+      hash = Hash.from_xml(render_to_string(:template => opts[:to_json], :layout => false))
+      hash = hash[hash.keys.first] if hash.keys.length == 1
+      content = hash.to_json
       cbparam = params[:callback] || params[:jsonp]
       content = "#{cbparam}(#{content})" unless cbparam.blank?
       render :json => content, :layout => false, :status => opts[:status]
