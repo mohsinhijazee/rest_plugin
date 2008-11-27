@@ -25,7 +25,8 @@ module Rest::RestHelper
   #   Then all the URLs in the response would endup with .json extention
   def url(url)
     return url if params[:format].nil?
-    return "#{url}.#{params[:format]}"
+    return url if url =~ /\.\w+$/
+    return "#{url}.#{params[:format]}" 
   end
   
   # *Description*
