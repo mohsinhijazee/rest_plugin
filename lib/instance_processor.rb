@@ -296,7 +296,7 @@ include Rest::UrlGenerator
     
     
     # If the provided value is nil, we need to delete it after checking the vesion
-    if !new_value['value']
+    if new_value['value'].nil?
       if detail_value.lock_version.to_i != new_value['lock_version'].to_i
         raise ObsoleteResource.new, "Attemped to delete stale detail value"
       else
