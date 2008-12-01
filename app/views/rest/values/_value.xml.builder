@@ -50,13 +50,27 @@ to_be_skipped = [
                   :instance_id
 
                 ]
-                
+
+# if the value is nil, its only in a case where there's an update was made while
+# setting the value to nil. In this case, nil is returned to the caller (which in this
+# case is the controller) Here we articicially popluate teh 
+if value.nil? and params[:action] = 'update'
+  value = DetailValue.new
+  # Because value no more exists! So no URL will be generated!
+  value.id = nil 
+  value.detail_id = params[:detail_id]
+  value.instance_id = params[:instance_id]
+  # Because value was set to nil
+  value.value = nil 
+end
+
 hash = value.attributes.symbolize_keys
 to_be_skipped.each {|attr| hash.delete attr}
 
+# Only generate this if the value contains ID
 hash[:url] =  url(instance_detail_value_url(  :instance_id => value.instance_id, 
                                           :detail_id => value.detail_id, 
-                                          :id => value.id))
+                                          :id => value.id)) if value.id
 hash[:instance_url] = url(instance_url(:id => value.instance_id))                                      
 hash[:detail_url] = url(detail_url(:id => value.detail_id))
 
