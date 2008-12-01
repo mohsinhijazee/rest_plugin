@@ -62,13 +62,15 @@ else
     # For each of item, generate a URL based on its type. Note that collection
     # either be totally of instances or totally of detail value and its subclasses
     @resource.each do |item|
-      if item.is_a? DetailValue
+      #debugger
+      if item.is_a? DetailValue or [DateDetailValue, IntegerDetailValue].include? item.class
         url = instance_detail_value_url(:instance_id  => item.instance_id,
                                         :detail_id    => item.detail_id,
                                         :id           => item.id)
       else
-        resource_type = item.class.name.underscore
-        resource_type = 'proposition' if item.class == DetailValueProposition
+        resource_type = params[:controller][/\w+$/].singularize
+        #resource_type = item.class.name.underscore
+        #resource_type = 'proposition' if item.class == DetailValueProposition
         url = url(self.send("#{resource_type}_url".to_sym, item))
       end
       xml.url url(url)
