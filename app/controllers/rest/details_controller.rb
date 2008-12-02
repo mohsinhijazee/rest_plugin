@@ -533,7 +533,7 @@ class Rest::DetailsController < Rest::RestController
       results[:order_by] = nil
       results[:direction] = nil
       results[:resources] = entity.details.dup
-      results[:resource_type] = results[:resources][0].class.name.underscore
+      #results[:resource_type] = results[:resources][0].class.name.underscore
       return results
     end
   end
