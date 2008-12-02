@@ -891,12 +891,13 @@ include Rest::UrlGenerator
     count_sql += " WHERE #{options[:conditions]}" if options[:conditions]
     
     
-    resource_type = options[:for].name.underscore
-    resource_type = 'value' if options[:for].superclass == DetailValue or options[:for] == DetailValue
-    resource_type = 'proposition' if options[:for] == DetailValueProposition
+    #resource_type = options[:for].name.underscore
+    #resource_type = 'value' if options[:for].superclass == DetailValue or options[:for] == DetailValue
+    #resource_type = 'proposition' if options[:for] == DetailValueProposition
     
     # Resource type is used by partials to render appropiate partial
-    result_set[:resource_type] = resource_type
+    #result_set[:resource_type] = resource_type
+    
     result_set[:resources_returned] = results.length
     result_set[:total_resources] = table.count_by_sql(count_sql)
     result_set[:start_index] = options[:start_index].to_i
