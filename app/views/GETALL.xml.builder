@@ -43,7 +43,8 @@
 xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 
 # Render the appropiate resource template from views/rest
-resources = render( :partial => @parcel[:resource_type] + '.xml.builder', 
+resource_type = params[:controller][/\w+$/].singularize
+resources = render( :partial => resource_type + '.xml.builder', 
                     :collection => @parcel[:resources])
 
 # Now delete the resources
