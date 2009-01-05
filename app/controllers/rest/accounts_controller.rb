@@ -30,13 +30,9 @@
 # FIXME: If a record is not found, how to respond?
 # FIXME: How to return the status codes?
 
-class Rest::AccountsController < ApplicationController
+class Rest::AccountsController < Rest::RestController
   
- include Rest::RestValidations
- include InstanceProcessor
- include Rest::UrlGenerator
  
- before_filter :login_required
  before_filter :validate_rest_call
  before_filter :check_ids
  before_filter :check_relationships
@@ -45,9 +41,12 @@ class Rest::AccountsController < ApplicationController
   # GET accounts/1.xml
   # GET accounts/1.json
   def show
-    @account = Account.find(params[:id])
-    respond_to do |format|
-      format.json {render :json => @account.to_json(:format => 'json')}
+    begin
+      @resource = Account.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -56,75 +55,47 @@ class Rest::AccountsController < ApplicationController
   # GET accounts.json
   def index
     begin
-    records = get_paginated_records_for(
+      
+    @parcel = get_paginated_records_for(
       :for            => Account,
       :start_index    => params[:start_index],
-      :max_results      => params[:max_results],
+      :max_results    => params[:max_results],
       :order_by       => params[:order_by],
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format| 
-       format.json {render :json => records.to_json}
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
   
   # POST accounts/
   def create
-    @account = Account.new(params[:account])
-#    @account.account_type_id = 1
-#    @account.name = "asdfsadf"
-#    @account.street = "asdf"
-#    @account.zip_code = "asdf"
-#    @account.city = "asdf"
-#    @account.status = "activeactive"
-#    @account.end_date = 40.months.from_now
-#    @account.subscription_id = "asdf"
-#    @account.vat_number = "234234"
-#    @account.attachment_count = 45
-    
-    
-    
     begin
-      @account.save!
-      @msg = 'OK'
-      @code = 201
+      @resource = Account.new(params[:account])
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-      @msg, @code = report_errors(@account, e)
+      @error = process_exception(e)
+      render :response => :error
     end
-    
-    respond_to do |format|
-      @msg = [(@@lookup[:Account] % [@@base_url, @account.id])+ '.json'] if @code == 201
-      format.json { render :json => @msg, :status => @code}
-    end
-    
   end
   
   # DONE!
   # PUT accounts/id
   # PUT accounts/id.xml
   # PUT accounts/id.json
-  def update
-    @account = Account.find(params[:id])
-    
+  def update    
     begin
-      @account.update_attributes!(params[:account])
-      @msg = @account.to_json(:format => 'json')
-      @code = 200
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(@account, e)[0]
-      @code = 409
+      @resource = Account.find(params[:id])
+      @resource.update_attributes!(params[:account])
+      render :response => :PUT
     rescue Exception => e
-      @msg, @code = report_errors(@account, e)
-    end
-    
-    respond_to do |format|
-      format.json {render :json => @msg, :status => @code }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
@@ -132,24 +103,14 @@ class Rest::AccountsController < ApplicationController
   # DELETE accounts/id.xml
   # DELETE accounts/id.json
   def destroy
-    @account = Account.find(params[:id])
+
     
     begin
       destroy_item(Account, params[:id], params[:lock_version])
-      @code = 200
-      @msg = 'OK'
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
-    rescue MadbException => e
-      @msg = report_errors(nil, e)[0]
-      @code = e.code
+      render :response => :DELETE
     rescue Exception => e
-      @msg, @code = report_errors(nil, e)
-    end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code }
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
