@@ -29,7 +29,7 @@ require 'json'
 # but as now we are exposing them, it would be better this to be nested
 # resource of accounts
 
-class Rest::UsersController < Admin::UsersController
+class Rest::UsersController < Rest::RestController
 
   include Rest::RestValidations
   include Rest::UrlGenerator
@@ -50,7 +50,7 @@ class Rest::UsersController < Admin::UsersController
     begin
       condition = "(account_id=#{params[:account_id]})"
       params[:conditions] = add_condition(params[:conditions], condition, :and)
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => User,
       :start_index    => params[:start_index],
       :max_results    => params[:max_results],
@@ -58,102 +58,58 @@ class Rest::UsersController < Admin::UsersController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json { render :json => records.to_json(:format => 'json'), :status => 200 and return}
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
   
   def show
-    @user = User.find(params[:id])
-    
-    respond_to do |format|
-      format.json { render :json => @user.to_json(:format => 'json') and return}
+    begin
+      @resource = User.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
+    
+    
   end
   
   def create
     begin
-      super
-      if @code == 400
-        @msg, @code = report_errors(@user, nil)
-      end
+      @resource = User.new(params[:user])
+      @resource.save!
+      render :response => :POST
     rescue Exception => e
-      render :json => report_errors(nil, e)[0], :status => 500 and return
-    end
-    
-    respond_to do |format|
-      format.json do 
-        @msg = [(@@lookup[:User] % [@@base_url, @user.id]) + '.json'] if @code == 201
-        render :json => @msg, :status => @code and return 
-      end
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   def update
-    begin 
-      super
-      if @code == 400
-        @msg, @code = report_errors(@users, nil)
-      end
-      if @code == 200
-        @msg = @users.to_json(:format => 'json')
-      end
-    rescue ActiveRecord::StaleObjectError => e
-      @msg = report_errors(nil, e)[0]
-      @code = 409
+    begin
+      @resource = User.find params[:id]
+      @resource.update_attributes!(params[:user])
+      render :response => :PUT
     rescue Exception => e
-      @msg = report_errors(@users, e)[0]
-      @code = 400
-    end
-    
-    respond_to do |format|
-      format.json do 
-        render :json => @msg, :status => @code and return
-      end
+      @error = process_exception(e)
+      render :response => :error
     end
   end
   
   def destroy
 
-    user_to_destroy = User.find params[:id]
-    
-    if user_to_destroy.user_type.name == 'primary_user'
-      render :json => report_errors(nil,'Primary User cannot be deleted')[0],
-        :status => 403 and return
-    end
-    
-# Commented out to disable optimistic locking
-    #    begin
-#      destroy_item(User, params[:id], params[:lock_version])
-#      @msg = 'OK'
-#      @code = 200
-#    rescue ActiveRecord::StaleObjectError => e
-#      @msg = report_errors(nil, e)[0]
-#      @code = 409
-#    rescue MadbException => e
-#      @msg = report_errors(nil, e)[0]
-#      @code = e.code
-#    rescue Exception => e
-#      @msg = report_errors(nil, e)[0]
-#      @code = 500
-#    end
-    
     begin
-      user_to_destroy.destroy
-      @msg = 'OK'
-      @code = 200
+      user = User.find params[:id]
+      raise CantDeletePrimaryUser if user.user_type.name == 'primary_user'
+      user.destroy
+      render :response => :DELETE
     rescue Exception => e
-      @msg = report_errors(nil, e)[0]
-      @code = 500
-    end
-    
-    respond_to do |format|
-      format.json { render :json => @msg, :status => @code and return }
+      @error = process_exception(e)
+      render :response => :error
     end
     
   end
