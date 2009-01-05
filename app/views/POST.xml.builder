@@ -50,9 +50,11 @@ xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
 # or is array
   #array is either of instances, or of detail values.
   
-# If any other thing other then detail values or instances then:
+# When a POST call is made for creating values, instances or propsitions,
+# its always an array. In all other cases its an ActiveRecord object.
 if @resource.is_a? ActiveRecord::Base
   url_for = "#{@resource.class.name.underscore}_url".to_sym
+  #url_for = params[:controller][/\w+$/].singularize
   url =  url(self.send( url_for, @resource))
   xml.url url
 else
@@ -63,7 +65,7 @@ else
     # either be totally of instances or totally of detail value and its subclasses
     @resource.each do |item|
       #debugger
-      if item.is_a? DetailValue or [DateDetailValue, IntegerDetailValue].include? item.class
+      if params[:controller] == 'rest/values'
         url = instance_detail_value_url(:instance_id  => item.instance_id,
                                         :detail_id    => item.detail_id,
                                         :id           => item.id)
