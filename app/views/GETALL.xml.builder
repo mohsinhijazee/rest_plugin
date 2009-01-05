@@ -41,9 +41,9 @@
 #
 
 xml.instruct! :xml, :version=>"1.0", :encoding=>"UTF-8"
-
 # Render the appropiate resource template from views/rest
-resource_type = params[:controller][/\w+$/].singularize
+#resource_type = params[:controller][/\w+$/].singularize
+resource_type = @parcel[:resource_type]
 resources = render( :partial => resource_type + '.xml.builder', 
                     :collection => @parcel[:resources])
 
