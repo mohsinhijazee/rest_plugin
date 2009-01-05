@@ -91,6 +91,13 @@ class MadbException < Exception
    end
  end
  
+ # Cannot delete primary user
+ class CantDeletePrimaryUser < MadbException
+   def initialize(message = 'Cannot delete Primary User', reasons = [])
+     super 403, message, reasons 
+   end
+ end
+ 
  
  
  # *Description*
