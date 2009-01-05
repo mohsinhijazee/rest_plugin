@@ -20,26 +20,16 @@
 # *Description*
 #   This class epxoses the user types as resoruce.
 #
-class Rest::UserTypesController < ApplicationController
-  include Rest::RestValidations
-  include Rest::UrlGenerator
-  include InstanceProcessor
-  
-  before_filter :login_required
-  
+class Rest::UserTypesController < Rest::RestController
+
   before_filter :validate_rest_call
   
   before_filter :check_ids
   
-  # NOT NEEDED
-  #before_filter :check_relationships
-  
-  # NOT NEEDED
-  #before_filter :adjust_params
   
   def index
     begin
-      records = get_paginated_records_for(
+      @parcel = get_paginated_records_for(
       :for            => UserType,
       :start_index    => params[:start_index],
       :max_results    => params[:max_results],
@@ -47,26 +37,23 @@ class Rest::UserTypesController < ApplicationController
       :direction      => params[:direction],
       :conditions     => params[:conditions]
       )
+      render :response => :GETALL
     rescue Exception => e
-      render :text => report_errors(nil, e)[0], :status => 500 and return
+      @error = process_exception(e)
+      render :response => :error
     end
     
-    respond_to do |format|
-      format.json do
-        render :json => records.to_json(:format => 'json')
-      end
-    end
   end
   
   def show
-    @user_types = UserType.find(params[:id])
-    
-    
-    respond_to do |format|
-      format.json do
-        render :json => @user_types.to_json(:format => 'json')
-      end
+    begin
+      @resource = UserType.find(params[:id])
+      render :response => :GET
+    rescue Exception => e
+      @error = process_exception(e)
+      render :response => :error
     end
+    
   end
   
   protected
