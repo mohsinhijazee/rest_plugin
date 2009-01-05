@@ -300,7 +300,10 @@ include Rest::UrlGenerator
       if detail_value.lock_version.to_i != new_value['lock_version'].to_i
         raise ObsoleteResource.new, "Attemped to delete stale detail value"
       else
-        detail_value.destroy and return nil
+        to_return = detail_value.dup
+        to_return.value = nil
+        detail_value.destroy
+        return to_return
       end
     end
     
@@ -891,12 +894,12 @@ include Rest::UrlGenerator
     count_sql += " WHERE #{options[:conditions]}" if options[:conditions]
     
     
-    #resource_type = options[:for].name.underscore
-    #resource_type = 'value' if options[:for].superclass == DetailValue or options[:for] == DetailValue
-    #resource_type = 'proposition' if options[:for] == DetailValueProposition
+    resource_type = options[:for].name.underscore
+    resource_type = 'value' if options[:for].superclass == DetailValue or options[:for] == DetailValue
+    resource_type = 'proposition' if options[:for] == DetailValueProposition
     
     # Resource type is used by partials to render appropiate partial
-    #result_set[:resource_type] = resource_type
+    result_set[:resource_type] = resource_type
     
     result_set[:resources_returned] = results.length
     result_set[:total_resources] = table.count_by_sql(count_sql)
