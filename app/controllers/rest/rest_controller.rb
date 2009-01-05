@@ -32,7 +32,7 @@ class Rest::RestController < ActionController::Base
   
   # We neet to replace with REST authentication. For now, its cookie based.
   # No authentication required for now
-  before_filter :login_required
+  #before_filter :login_required
   
   #before_filter :log_me_in
   #after_filter :log_me_out
@@ -104,7 +104,6 @@ class Rest::RestController < ActionController::Base
       super opts, &block
     end
 end
-
   # *Description*
   #   Renders different REST responses.
   def render_rest_response(opts)
