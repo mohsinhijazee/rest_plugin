@@ -56,7 +56,7 @@ if @resource.is_a? ActiveRecord::Base
   url_for = "#{@resource.class.name.underscore}_url".to_sym
   #url_for = params[:controller][/\w+$/].singularize
   url =  url(self.send( url_for, @resource))
-  xml.url url
+  xml.url(:type => 'array'){xml.url url}
 else
   # But if these are instances or detail values, then we will return
   # an array of URLs.
