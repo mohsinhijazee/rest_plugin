@@ -1038,7 +1038,8 @@ include Rest::UrlGenerator
     
     
     #record_count = ActiveRecord::Base.connection.execute(count_query)[0][0]
-    record_count = ActiveRecord::Base.connection.execute(count_query)[0]['count'].to_i
+    count_row = ActiveRecord::Base.connection.execute(count_query)[0]
+    record_count = count_row[0] ? count_row[0] : count_row['count'].to_i
     
     
     # If the options for pagination are provided
