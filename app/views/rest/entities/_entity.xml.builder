@@ -43,12 +43,13 @@
 # Add any attributes that should not be part of the representation here
 to_be_skipped = [
                   :id,
-                  :account_id
+                  :database_id
                 ]
 # Add all the URLs to this model
 hash = entity.attributes.symbolize_keys
 
 hash[:url]             = url(entity_url(entity))
+hash[:database_url]    = url(database_url(entity.database_id))
 hash[:details_url]     = url(entity_details_url(:entity_id => entity.id))
 hash[:instances_url]   = url(entity_instances_url(:entity_id => entity.id))
 hash[:relations_url]   = url(entity_relations_url(:entity_id => entity.id))
