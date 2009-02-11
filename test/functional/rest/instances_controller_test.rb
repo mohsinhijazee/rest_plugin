@@ -17,7 +17,7 @@
 #Copyright 2008 Raphaël Bauduin
 ################################################################################
 
-require File.dirname(__FILE__) + '/../test_helper'
+require File.dirname(__FILE__) + '/../../test_helper'
 require 'rest/instances_controller'
 
 #FIXME: Tests of the controller should be executed indivisually otherwise
